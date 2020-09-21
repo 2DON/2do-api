@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/api
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: true
+
+server:
+  error:
+    include-message: always
+
+auth:
+  secret: ${random.value}
+  expiration: 28800
+  secure: false

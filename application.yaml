@@ -1,0 +1,13 @@
+# fill in this file and copy to the folder where the jar is
+
+spring:
+  datasource:
+    url: jdbc:postgresql://<ip>:<port>/<database>
+    username: <username>
+    password: <password>
+  jpa:
+    generate-ddl: true
+
+auth:
+  secret: <secret>
+  expiration: <expiration-seconds>
