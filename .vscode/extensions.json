@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "2gua.rainbow-brackets",
+    "aaron-bond.better-comments",
+    "eamodio.gitlens",
+    "EditorConfig.EditorConfig",
+    "VisualStudioExptTeam.vscodeintellicode",
+    "fabiospampinato.vscode-todo-plus",
+    "naco-siren.gradle-language",
+    "vscjava.vscode-java-pack",
+    "gabrielbb.vscode-lombok",
+    "sonarsource.sonarlint-vscode",
+    "pivotal.vscode-boot-dev-pack"
+  ]
+}

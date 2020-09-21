@@ -2,7 +2,7 @@
   "configurations": [
     {
       "type": "java",
-      "name": "Spring Boot-Application<api>",
+      "name": "Debug API",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "console": "internalConsole",
