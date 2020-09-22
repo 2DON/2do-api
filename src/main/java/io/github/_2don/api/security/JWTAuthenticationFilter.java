@@ -40,7 +40,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       // get account from json response
       var credentials = new ObjectMapper().readValue(request.getInputStream(), Account.class);
       // use the account to attemp authentication
-      return authman.authenticate(new UsernamePasswordAuthenticationToken(credentials.getUsername(),
+      return authman.authenticate(new UsernamePasswordAuthenticationToken(credentials.getEmail(),
           credentials.getPassword(), Collections.emptyList()));
     } catch (JsonParseException | JsonMappingException e) {
       throw new BadCredentialsException(null, e);

@@ -30,17 +30,17 @@ public class Account {
   private Long id;
 
   @NotNull
-  @Size(min = 4, max = 20)
-  @Column(nullable = false, unique = true, length = 20)
-  private String username;
+  @Size(min = 4, max = 50)
+  @Column(nullable = false, unique = true, length = 50)
+  private String email;
 
   @Size(min = 8, max = 60)
   @Column(nullable = false, length = 60)
   @JsonProperty(access = Access.WRITE_ONLY)
   private String password;
 
-  public Account(String username, String password) {
-    this.username = username;
+  public Account(String email, String password) {
+    this.email = email;
     this.password = password;
   }
 

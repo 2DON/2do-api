@@ -15,11 +15,11 @@ public class AccountDetailsService implements UserDetailsService {
   private @Autowired AccountJPA accountJPA;
 
   @Override
-  public UserDetails loadUserByUsername(String username) {
-    var account = accountJPA.findByUsername(username)
-        .orElseThrow(() -> new UsernameNotFoundException(username));
+  public UserDetails loadUserByUsername(String email) {
+    var account =
+        accountJPA.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
 
-    return new AccountDetails(account.getId(), account.getUsername(), account.getPassword(),
+    return new AccountDetails(account.getId(), account.getEmail(), account.getPassword(),
         Collections.emptyList());
   }
 

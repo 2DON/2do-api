@@ -33,7 +33,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         .csrf().disable()
         // authorize requests that don't need auth
         .authorizeRequests().antMatchers(HttpMethod.POST, "/accounts/sign-up").permitAll()
-        .antMatchers(HttpMethod.GET, "/accounts/exists/{username}").permitAll()
+        .antMatchers(HttpMethod.GET, "/accounts/exists/{email}").permitAll()
         // set all other requests for authenticated users only
         .anyRequest().authenticated().and()
         // add sign-in route

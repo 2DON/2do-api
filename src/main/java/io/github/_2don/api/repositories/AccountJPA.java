@@ -7,10 +7,10 @@ import org.springframework.data.repository.query.Param;
 import io.github._2don.api.models.Account;
 
 public interface AccountJPA extends JpaRepository<Account, Long> {
-  boolean existsByUsername(String username);
+  boolean existsByEmail(String email);
 
-  Optional<Account> findByUsername(String username);
+  Optional<Account> findByEmail(String email);
 
-  @Query("select account.id from Account as account where account.username = :username")
-  Long getId(@Param("username") String username);
+  @Query("select account.id from Account as account where account.email = :email")
+  Long getId(@Param("email") String email);
 }
