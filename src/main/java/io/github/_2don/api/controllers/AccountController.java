@@ -3,6 +3,7 @@ package io.github._2don.api.controllers;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,6 +44,12 @@ public class AccountController {
     }
 
     accountJPA.save(account);
+  }
+
+  @GetMapping("/info")
+  public Account info(@AuthenticationPrincipal Long accountId) {
+    return accountJPA.findById(accountId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
   }
 
   @GetMapping("/sign-out")
