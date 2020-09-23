@@ -8,21 +8,19 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import io.github._2don.api.repositories.AccountJPA;
-import io.github._2don.api.services.AccountDetailsService;
 
 @EnableWebSecurity
 public class WebSecurity extends WebSecurityConfigurerAdapter {
+
   private @Autowired JWTConfig jwtConfig;
   private @Autowired AccountJPA accountJPA;
-  private @Autowired AccountDetailsService accountDetailsService;
-  private @Autowired BCryptPasswordEncoder bcrypt;
+  private @Autowired JWTAuthenticationProvider jwtAuthenticationProvider;
 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
@@ -49,7 +47,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
 
   @Override
   protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(accountDetailsService).passwordEncoder(bcrypt);
+    auth.authenticationProvider(jwtAuthenticationProvider);
   }
 
   @Bean
