@@ -2,7 +2,6 @@ package io.github._2don.api.security;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.stream.Stream;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -32,20 +31,14 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain chain) throws IOException, ServletException {
 
-    var cookies = request.getCookies();
-    if (cookies == null) {
+    var header = request.getHeader(jwtConfig.getTokenHeader());
+
+    if (header == null || !header.startsWith(jwtConfig.getTokenPrefix())) {
       chain.doFilter(request, response);
       return;
     }
 
-    var cookie =
-        Stream.of(cookies).filter(c -> jwtConfig.getCookieName().equals(c.getName())).findFirst();
-    if (!cookie.isPresent() || !cookie.get().getValue().startsWith(jwtConfig.getTokenPrefix())) {
-      chain.doFilter(request, response);
-      return;
-    }
-
-    var token = cookie.get().getValue().substring(jwtConfig.getTokenPrefix().length());
+    var token = header.substring(jwtConfig.getTokenPrefix().length());
 
     Long accountId;
     try {
@@ -61,7 +54,8 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     if (accountId == null || !accountJPA.existsById(accountId)) {
-      response.addHeader("Set-Cookie", Cookie.delete(jwtConfig.getCookieName()).path("/").build());
+      response.setHeader("Access-Control-Expose-Headers", jwtConfig.getTokenHeader());
+      response.setHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
       chain.doFilter(request, response);
       return;
     }

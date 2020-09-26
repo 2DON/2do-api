@@ -12,5 +12,3 @@ server:
 
 auth:
   secret: ${random.value}
-  expiration: 28800
-  secure: false

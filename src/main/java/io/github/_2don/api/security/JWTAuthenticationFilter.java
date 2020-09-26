@@ -17,7 +17,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import io.github._2don.api.security.Cookie.SameSite;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -46,7 +45,6 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         || credentials.getPassword() == null || credentials.getPassword().isEmpty()) {
       throw new BadCredentialsException("invalid credentials");
     }
-
 
     // use the credentials to attemp authentication
     try {
@@ -77,22 +75,8 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         // sign the token using the hmac512 algorithm
         .sign(Algorithm.HMAC512(jwtConfig.getSecret()));
 
-    var cookie = Cookie
-        // create the token builder with name and value
-        .createWith(jwtConfig.getCookieName(), jwtConfig.getTokenPrefix() + token)
-        // HttpOnly: removes js acess to the cookie
-        .httpOnly(true)
-        // Firefox and Chrome accept SameSite=Strict attribute, in theory, avoid CSRF
-        .sameSite(SameSite.STRICT)
-        // when Max-Age is set the token will not be deleted on session end
-        .maxAge(jwtConfig.getMaxAge())
-        // send to all domain paths
-        .path("/")
-        // only send the cookie over HTTPS / disable this in production mode setting auth.secure to
-        // false
-        .secure(jwtConfig.isSecure()).build();
-
-    response.addHeader("Set-Cookie", cookie);
+    response.setHeader("Access-Control-Expose-Headers", jwtConfig.getTokenHeader());
+    response.setHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenPrefix() + token);
   }
 
 }
