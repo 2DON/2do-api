@@ -10,4 +10,8 @@ spring:
 
 auth:
   secret: <secret>
-  expiration: <expiration-seconds>
+  token:
+    header: Authorization
+    prefix: Bearer_
+    expiration: 2880000 # 8 hours
+    expired_value: EXPIRED

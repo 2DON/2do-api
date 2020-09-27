@@ -32,3 +32,5 @@ out/
 
 ### VS Code ###
 bin/
+
+lombok.config
