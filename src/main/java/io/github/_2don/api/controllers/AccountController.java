@@ -33,7 +33,7 @@ public class AccountController {
   @ResponseStatus(HttpStatus.CREATED)
   public void signUp(@RequestBody Account account) {
     if (account.getEmail() == null || !Patterns.EMAIL.matches(account.getEmail())
-        || account.getPassword() == null || account.getPassword().length() <= 4) {
+        || account.getPassword() == null || account.getPassword().length() < 8) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
     }
 
@@ -67,7 +67,7 @@ public class AccountController {
     }
 
     if (account.getPassword() != null) {
-      if (account.getPassword().length() <= 4) {
+      if (account.getPassword().length() < 8) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
 
