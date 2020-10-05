@@ -7,6 +7,11 @@ spring:
     password: <password>
   jpa:
     generate-ddl: true
+  servlet:
+    multipart:
+      enabled: true
+      file-size-threshold: 2KB
+      max-file-size: 900KB
 
 auth:
   secret: <secret>
@@ -15,3 +20,5 @@ auth:
     prefix: Bearer_
     expiration: 2880000 # 8 hours
     expired_value: EXPIRED
+
+avatar_folder: <path_to_images_folder>

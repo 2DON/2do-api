@@ -39,7 +39,8 @@ public class Account {
   private String name;
 
   @Column(columnDefinition = "TEXT")
-  private String avatar;
+  @JsonProperty(access = Access.READ_ONLY)
+  private String avatarUrl;
 
   @Column(nullable = false)
   @JsonProperty(access = Access.READ_ONLY)

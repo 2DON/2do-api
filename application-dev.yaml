@@ -12,3 +12,5 @@ server:
 
 auth:
   secret: ${random.value}
+
+avatar_folder: ${java.io.tmpdir}2do-images
