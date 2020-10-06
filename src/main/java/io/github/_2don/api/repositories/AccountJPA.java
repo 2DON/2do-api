@@ -1,5 +1,6 @@
 package io.github._2don.api.repositories;
 
+import java.sql.Date;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import io.github._2don.api.models.Account;
@@ -19,6 +20,8 @@ public interface AccountJPA extends JpaRepository<Account, Long> {
     String getEmail();
 
     String getPassword();
+
+    Date getDeleteRequest();
 
   }
 

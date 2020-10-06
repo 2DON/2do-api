@@ -1,5 +1,6 @@
 package io.github._2don.api.security;
 
+import java.sql.Date;
 import java.util.Collections;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -24,6 +25,17 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
 
     var account =
         accountJPA.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+
+    if (account.getDeleteRequest() != null) {
+      if (account.getDeleteRequest().compareTo(new Date(System.currentTimeMillis())) > 0) {
+        // account is still valid, so we will cancel the delete request
+        var stored = accountJPA.findById(account.getId()).orElseGet(() -> null);
+        stored.setDeleteRequest(null);
+        accountJPA.save(stored);
+      } else {
+        throw new UsernameNotFoundException("deleted");
+      }
+    }
 
     if (!bcrypt.matches(password, account.getPassword())) {
       throw new BadCredentialsException(email);
