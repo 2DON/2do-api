@@ -8,12 +8,17 @@ import javax.persistence.Column;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import javax.persistence.GenerationType;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import javax.persistence.JoinColumn;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Getter
@@ -24,26 +29,35 @@ import lombok.ToString;
 public class Team {
 
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
-  @NotNull
-  @Size
-  @Column(nullable = false)
-  private String avatarUrl;
+  @Column(columnDefinition = "TEXT")
+  private String avatarURL;
 
   @NotNull
-  @Size
-  @Column(nullable = false)
+  @Size(min = 1, max = 160)
+  @Column(nullable = false, length = 160)
   private String name;
 
-  @NotNull
+  @CreationTimestamp
+  @JsonProperty(access = Access.READ_ONLY)
   @Column(nullable = false)
   private Timestamp createdAt;
 
-  @NotNull
+  @UpdateTimestamp
+  @JsonProperty(access = Access.READ_ONLY)
   @Column(nullable = false)
-  private Timestamp updateAt;
+  private Timestamp updatedAt;
 
+  @ManyToOne
+  @JsonProperty(access = Access.READ_ONLY)
+  @JoinColumn(referencedColumnName = "id", nullable = false)
+  private Account createdBy;
+
+  @ManyToOne
+  @JsonProperty(access = Access.READ_ONLY)
+  @JoinColumn(referencedColumnName = "id", nullable = false)
+  private Account updatedBy;
 }
