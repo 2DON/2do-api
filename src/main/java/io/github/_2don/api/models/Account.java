@@ -1,20 +1,20 @@
 package io.github._2don.api.models;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import java.sql.Timestamp;
-import java.sql.Date;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import java.sql.Date;
+import java.sql.Timestamp;
 
 @Entity
 @Setter
@@ -29,13 +29,14 @@ public class Account {
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
-  @Column(nullable = false, unique = true, length = 50)
+  @Column(nullable = false, unique = true, length = 45)
   private String email;
 
+  @Column(nullable = false, columnDefinition = "CHAR(60)")
   @JsonProperty(access = Access.WRITE_ONLY)
   private String password;
 
-  @Column(nullable = false)
+  @Column(nullable = false, length = 45)
   private String name;
 
   @Column(columnDefinition = "TEXT")
@@ -46,13 +47,16 @@ public class Account {
   @JsonProperty(access = Access.READ_ONLY)
   private Boolean premium = false;
 
+  @Column(columnDefinition = "TEXT")
   private String options;
 
   @JsonProperty(access = Access.READ_ONLY)
   private Date deleteRequest;
 
+  @CreationTimestamp
+  @Column(nullable = false)
   @JsonProperty(access = Access.READ_ONLY)
-  private Timestamp createdAt = new Timestamp(System.currentTimeMillis());
+  private Timestamp createdAt;
 
   public Account(String email, String password) {
     this.email = email;

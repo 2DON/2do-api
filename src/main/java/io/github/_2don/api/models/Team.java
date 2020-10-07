@@ -29,35 +29,37 @@ import org.hibernate.annotations.UpdateTimestamp;
 public class Team {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @GeneratedValue
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
   @Column(columnDefinition = "TEXT")
-  private String avatarURL;
+  @JsonProperty(access = Access.READ_ONLY)
+  private String avatarUrl;
 
   @NotNull
-  @Size(min = 1, max = 160)
-  @Column(nullable = false, length = 160)
+  @Size(min = 1, max = 45)
+  @Column(nullable = false, length = 45)
   private String name;
 
   @CreationTimestamp
-  @JsonProperty(access = Access.READ_ONLY)
   @Column(nullable = false)
+  @JsonProperty(access = Access.READ_ONLY)
   private Timestamp createdAt;
 
-  @UpdateTimestamp
+  @ManyToOne
+  @JoinColumn(name="created_by", referencedColumnName = "id", nullable = false)
   @JsonProperty(access = Access.READ_ONLY)
+  private Account createdBy;
+
+  @UpdateTimestamp
   @Column(nullable = false)
+  @JsonProperty(access = Access.READ_ONLY)
   private Timestamp updatedAt;
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
-  @JoinColumn(referencedColumnName = "id", nullable = false)
-  private Account createdBy;
-
-  @ManyToOne
-  @JsonProperty(access = Access.READ_ONLY)
-  @JoinColumn(referencedColumnName = "id", nullable = false)
+  @JoinColumn(name="updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
+
 }

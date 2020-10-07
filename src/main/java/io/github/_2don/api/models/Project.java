@@ -1,18 +1,18 @@
 package io.github._2don.api.models;
 
-import java.sql.Timestamp;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Column;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import java.sql.Timestamp;
 
 @Entity
 @Getter
@@ -27,33 +27,41 @@ public class Project {
   private Long id;
 
   @NotNull
-  @Size
-  @Column(nullable = false)
+  @NotBlank
+  @Column(columnDefinition = "TEXT", nullable = false)
   private String description;
 
+  // TODO: enum ProjectStatus
   @Column(nullable = false)
   private Byte status;
 
-  @Column(nullable = false)
+  @Column(length = 250)
   private String observation;
 
   @Column(nullable = false)
-  private Boolean archived;
+  private Boolean archived = false;
 
-  @Column(nullable = false)
+  @Column(columnDefinition = "TEXT")
   private String options;
 
+  @CreationTimestamp
   @Column(nullable = false)
+  @JsonProperty(access = Access.READ_ONLY)
   private Timestamp createdAt;
 
-  @Column(nullable = false)
-  private Timestamp updatedAt;
-
-
-  @Column(nullable = false)
+  @ManyToOne
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
+  @JsonProperty(access = Access.READ_ONLY)
   private Account createdBy;
 
+  @UpdateTimestamp
   @Column(nullable = false)
+  @JsonProperty(access = Access.READ_ONLY)
+  private Timestamp updatedAt;
+
+  @ManyToOne
+  @JsonProperty(access = Access.READ_ONLY)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
 }
