@@ -1,13 +1,10 @@
 package io.github._2don.api;
 
-import java.io.File;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
+import io.github._2don.api.security.JWTAuthenticationProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import io.github._2don.api.security.JWTAuthenticationProvider;
 
 @SpringBootApplication
 public class Application {
@@ -25,8 +22,4 @@ public class Application {
     return new JWTAuthenticationProvider();
   }
 
-  @Bean
-  CommandLineRunner createAvatarFolder(@Value("${avatar_folder}") String avatarFolder) {
-    return args -> new File(avatarFolder).mkdirs();
-  }
 }

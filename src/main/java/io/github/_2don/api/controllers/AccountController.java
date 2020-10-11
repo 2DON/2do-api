@@ -4,6 +4,7 @@ import io.github._2don.api.models.Account;
 import io.github._2don.api.projections.PublicAccount;
 import io.github._2don.api.repositories.AccountJPA;
 import io.github._2don.api.security.JWTConfig;
+import io.github._2don.api.utils.ImageEncoder;
 import io.github._2don.api.utils.Patterns;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.Base64;
 import java.util.List;
 
 @RestController
@@ -68,8 +68,7 @@ public class AccountController {
                       @RequestPart(name = "options", required = false) String options,
                       @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
 
-    var stored = accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var stored = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (email != null) {
       if (!Patterns.EMAIL.matches(email) || email.length() > 45) {
@@ -107,8 +106,7 @@ public class AccountController {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
 
-      stored.setAvatarUrl(
-        "data:image/png;base64," + Base64.getEncoder().encodeToString(avatar.getBytes()));
+      stored.setAvatarUrl(ImageEncoder.encodeToString(avatar.getBytes()));
     }
 
     return accountJPA.save(stored);
@@ -129,8 +127,7 @@ public class AccountController {
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId, @RequestBody String password,
                       HttpServletResponse response) {
-    var account = accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (!bcrypt.matches(password, account.getPassword())) {
       // wrong password

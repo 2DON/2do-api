@@ -1,11 +1,7 @@
 package io.github._2don.api.models;
 
-import java.sql.Timestamp;
-import javax.persistence.*;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
@@ -16,9 +12,14 @@ import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.sql.Timestamp;
+
 @Entity
-@Getter
 @Setter
+@Getter
 @ToString
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -34,6 +35,7 @@ public class Task {
   @JsonIgnore
   @ManyToOne
   @JoinColumn(referencedColumnName = "id", nullable = false)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
   private Project project;
 
   @Column(nullable = false)
@@ -53,7 +55,8 @@ public class Task {
 
   // TODO serialize just the account id
   @ManyToOne
-  @JoinColumn(name="assigned_to", referencedColumnName = "id", nullable = false)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JoinColumn(name = "assigned_to", referencedColumnName = "id", nullable = false)
   private Account assignedTo;
 
   @CreationTimestamp
@@ -62,8 +65,9 @@ public class Task {
   private Timestamp createdAt;
 
   @ManyToOne
-  @JoinColumn(name="created_by", referencedColumnName = "id", nullable = false)
   @JsonProperty(access = Access.READ_ONLY)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   private Account createdBy;
 
   @UpdateTimestamp
@@ -73,7 +77,8 @@ public class Task {
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
-  @JoinColumn(name="updated_by", referencedColumnName = "id", nullable = false)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
 

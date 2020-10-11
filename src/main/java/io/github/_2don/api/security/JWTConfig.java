@@ -1,16 +1,17 @@
 package io.github._2don.api.security;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
 
 @Getter
 @Configuration
 public class JWTConfig {
 
   @Value("${auth.secret}")
-  private @Getter(AccessLevel.PACKAGE) String secret;
+  @Getter(AccessLevel.PACKAGE)
+  private String secret;
 
   @Value("${auth.token.header}")
   private String tokenHeader;

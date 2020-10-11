@@ -1,28 +1,24 @@
 package io.github._2don.api.models;
 
-import java.sql.Timestamp;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Column;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import javax.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import javax.persistence.GenerationType;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import javax.persistence.JoinColumn;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.sql.Timestamp;
+
 @Entity
-@Getter
 @Setter
+@Getter
 @ToString
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -48,8 +44,9 @@ public class Team {
   private Timestamp createdAt;
 
   @ManyToOne
-  @JoinColumn(name="created_by", referencedColumnName = "id", nullable = false)
   @JsonProperty(access = Access.READ_ONLY)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   private Account createdBy;
 
   @UpdateTimestamp
@@ -59,7 +56,8 @@ public class Team {
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
-  @JoinColumn(name="updated_by", referencedColumnName = "id", nullable = false)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
 }

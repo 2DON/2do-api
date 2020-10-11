@@ -1,5 +1,6 @@
 package io.github._2don.api.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -11,12 +12,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.sql.Timestamp;
 
 @Entity
-@Getter
 @Setter
+@Getter
 @ToString
 @NoArgsConstructor
 @IdClass(TeamMembersId.class)
@@ -29,12 +29,14 @@ public class TeamMembers {
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JoinColumn(referencedColumnName = "id", nullable = false)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
   private Account account;
 
   @Id
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JoinColumn(referencedColumnName = "id", nullable = false)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
   private Team team;
 
   @NotNull

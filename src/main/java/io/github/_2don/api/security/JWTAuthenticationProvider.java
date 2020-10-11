@@ -1,7 +1,6 @@
 package io.github._2don.api.security;
 
-import java.sql.Date;
-import java.util.Collections;
+import io.github._2don.api.repositories.AccountJPA;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -10,12 +9,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import io.github._2don.api.repositories.AccountJPA;
+
+import java.sql.Date;
+import java.util.Collections;
 
 public class JWTAuthenticationProvider implements AuthenticationProvider {
 
-  public @Autowired BCryptPasswordEncoder bcrypt;
-  public @Autowired AccountJPA accountJPA;
+  @Autowired
+  private BCryptPasswordEncoder bcrypt;
+  @Autowired
+  private AccountJPA accountJPA;
 
   @Override
   public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -24,7 +27,7 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
     var password = authentication.getCredentials().toString();
 
     var account =
-        accountJPA.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
+      accountJPA.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException(email));
 
     if (account.getDeleteRequest() != null) {
       if (account.getDeleteRequest().compareTo(new Date(System.currentTimeMillis())) > 0) {

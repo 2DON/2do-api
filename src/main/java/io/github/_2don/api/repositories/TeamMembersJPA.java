@@ -1,8 +1,9 @@
 package io.github._2don.api.repositories;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import io.github._2don.api.models.TeamMembers;
+import io.github._2don.api.models.TeamMembersId;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TeamMembersJPA extends JpaRepository<TeamMembers, Long> {
+public interface TeamMembersJPA extends JpaRepository<TeamMembers, TeamMembersId> {
 
 }

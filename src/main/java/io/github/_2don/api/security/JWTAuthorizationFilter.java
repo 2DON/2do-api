@@ -1,27 +1,28 @@
 package io.github._2don.api.security;
 
-import java.io.IOException;
-import java.util.Collections;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import io.github._2don.api.repositories.AccountJPA;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import io.github._2don.api.repositories.AccountJPA;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collections;
 
 public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
-  private AccountJPA accountJPA;
-  private JWTConfig jwtConfig;
+  private final AccountJPA accountJPA;
+  private final JWTConfig jwtConfig;
 
   public JWTAuthorizationFilter(JWTConfig jwtConfig, AccountJPA accountJPA,
-      AuthenticationManager authman) {
+                                AuthenticationManager authman) {
     super(authman);
     this.accountJPA = accountJPA;
     this.jwtConfig = jwtConfig;
@@ -29,7 +30,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain chain) throws IOException, ServletException {
+                                  FilterChain chain) throws IOException, ServletException {
 
     var header = request.getHeader(jwtConfig.getTokenHeader());
 
@@ -43,12 +44,12 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     Long accountId;
     try {
       accountId = Long.valueOf(
-          // create a token verifier with the same algorithm as before
-          JWT.require(Algorithm.HMAC512(jwtConfig.getSecret())).build()
-              // verify the token
-              .verify(token)
-              // get the accountId
-              .getSubject());
+        // create a token verifier with the same algorithm as before
+        JWT.require(Algorithm.HMAC512(jwtConfig.getSecret())).build()
+          // verify the token
+          .verify(token)
+          // get the accountId
+          .getSubject());
     } catch (JWTVerificationException e) {
       accountId = null;
     }
@@ -62,7 +63,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     // successful authentication, sets the @AuthenticationPrincipal principal to Long accountId
     SecurityContextHolder.getContext().setAuthentication(
-        new UsernamePasswordAuthenticationToken(accountId, null, Collections.emptyList()));
+      new UsernamePasswordAuthenticationToken(accountId, null, Collections.emptyList()));
     chain.doFilter(request, response);
   }
 

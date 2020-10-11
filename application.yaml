@@ -21,4 +21,3 @@ auth:
     expiration: 2880000 # 8 hours
     expired_value: EXPIRED
 
-avatar_folder: <path_to_images_folder>

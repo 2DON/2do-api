@@ -1,11 +1,13 @@
 package io.github._2don.api.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -15,8 +17,9 @@ import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 
 @Entity
-@Getter
 @Setter
+@Getter
+@ToString
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Project {
@@ -50,8 +53,9 @@ public class Project {
   private Timestamp createdAt;
 
   @ManyToOne
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   @JsonProperty(access = Access.READ_ONLY)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   private Account createdBy;
 
   @UpdateTimestamp
@@ -61,6 +65,7 @@ public class Project {
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
+  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
