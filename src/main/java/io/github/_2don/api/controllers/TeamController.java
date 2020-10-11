@@ -42,7 +42,7 @@ public class TeamController {
     // TODO verify if user is part of the project
     // TODO verify if user has permission
 
-    var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
     var teamEdit = teamJPA.findById(teamId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     teamEdit.setName(team.getName());

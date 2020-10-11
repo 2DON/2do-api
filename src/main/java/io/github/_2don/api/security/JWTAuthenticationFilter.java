@@ -3,13 +3,12 @@ package io.github._2don.api.security;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -47,14 +46,12 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       throw new BadCredentialsException("invalid credentials");
     }
 
-    // use the credentials to attemp authentication
+    // use the credentials to attempt authentication
     try {
       return authman.authenticate(new UsernamePasswordAuthenticationToken(credentials.getEmail(),
         credentials.getPassword(), Collections.emptyList()));
-    } catch (UsernameNotFoundException exception) {
-      response.setStatus(HttpStatus.NOT_FOUND.value());
-    } catch (BadCredentialsException exception) {
-      response.setStatus(HttpStatus.FORBIDDEN.value());
+    } catch (ResponseStatusException exception) {
+      response.setStatus(exception.getStatus().value());
     }
 
     return null;
@@ -73,7 +70,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
       .withSubject(Long.toString(accountId))
       // set expiration
       .withExpiresAt(new Date(System.currentTimeMillis() + jwtConfig.getExpiration()))
-      // sign the token using the hmac512 algorithm
+      // sign the token using the HMAC512 algorithm
       .sign(Algorithm.HMAC512(jwtConfig.getSecret()));
 
     response.setHeader("Access-Control-Expose-Headers", jwtConfig.getTokenHeader());
