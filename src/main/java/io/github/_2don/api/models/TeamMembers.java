@@ -1,8 +1,6 @@
 package io.github._2don.api.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,20 +21,20 @@ import java.sql.Timestamp;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TeamMembers {
 
-  // TODO JSON config
-
   @Id
   @ManyToOne
+  @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JoinColumn(referencedColumnName = "id", nullable = false)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account account;
 
   @Id
   @ManyToOne
+  @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JoinColumn(referencedColumnName = "id", nullable = false)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Team team;
 
   @NotNull
@@ -53,5 +51,9 @@ public class TeamMembers {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Timestamp updatedAt;
 
+  public TeamMembers(Account account, Team team) {
+    this.account = account;
+    this.team = team;
+  }
 
 }

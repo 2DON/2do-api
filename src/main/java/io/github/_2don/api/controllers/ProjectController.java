@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,10 +50,7 @@ public class ProjectController {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
 
-    if (project.getStatus() == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-    } else {
-
+    if (project.getStatus() != null) {
       projectEdit.setStatus(project.getStatus());
     }
 
@@ -63,10 +61,7 @@ public class ProjectController {
       projectEdit.setDescription(project.getDescription());
     }
 
-    if (project.getArchived() == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-    } else {
-
+    if (project.getArchived() != null) {
       projectEdit.setArchived(project.getArchived());
     }
 
@@ -93,7 +88,7 @@ public class ProjectController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public Project store(@AuthenticationPrincipal Long accountId, @RequestBody Project project) {
+  public Project store(@AuthenticationPrincipal Long accountId, @Validated @RequestBody Project project) {
     var account = accountJPA.getOne(accountId);
 
     project.setCreatedBy(account);

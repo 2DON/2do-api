@@ -1,9 +1,6 @@
 package io.github._2don.api.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,16 +27,16 @@ public class Task {
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
-  // TODO serialize just the project id
   // TODO LAZY?
-  @JsonIgnore
   @ManyToOne
+  @JsonIgnore
+  @JsonIdentityReference(alwaysAsId = true)
   @JoinColumn(referencedColumnName = "id", nullable = false)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Project project;
 
   @Column(nullable = false)
-  private Integer ordinal = -1;
+  private Integer ordinal = Integer.MAX_VALUE;
 
   @NotNull
   @Size(min = 1, max = 80)
@@ -53,9 +50,9 @@ public class Task {
   @Column(columnDefinition = "TEXT")
   private String options;
 
-  // TODO serialize just the account id
   @ManyToOne
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityReference(alwaysAsId = true)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @JoinColumn(name = "assigned_to", referencedColumnName = "id", nullable = false)
   private Account assignedTo;
 
@@ -66,8 +63,9 @@ public class Task {
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityReference(alwaysAsId = true)
   @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
   @UpdateTimestamp
@@ -77,9 +75,14 @@ public class Task {
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityReference(alwaysAsId = true)
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 
-
+  public Task(Project project, @NotNull @Size(min = 1, max = 80) String description, Account assignedTo) {
+    this.project = project;
+    this.description = description;
+    this.assignedTo = assignedTo;
+  }
 }

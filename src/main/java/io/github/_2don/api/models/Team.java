@@ -1,8 +1,6 @@
 package io.github._2don.api.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,8 +43,9 @@ public class Team {
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityReference(alwaysAsId = true)
   @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
   @UpdateTimestamp
@@ -56,8 +55,13 @@ public class Team {
 
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityReference(alwaysAsId = true)
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
+
+  public Team(@NotNull @Size(min = 1, max = 45) String name) {
+    this.name = name;
+  }
 
 }

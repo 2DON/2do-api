@@ -1,8 +1,6 @@
 package io.github._2don.api.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,29 +21,30 @@ import java.sql.Timestamp;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectMembers {
 
-  // TODO JSON config
-
   // FIXME field is NOT NULL, but shout not be
   @Id
   @ManyToOne
   @JoinColumn(referencedColumnName = "id")
+  @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account account;
 
   @Id
   @ManyToOne
+  @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JoinColumn(referencedColumnName = "id", nullable = false)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Project project;
 
   // FIXME field is NOT NULL, but shout not be
   @Id
   @ManyToOne
   @JoinColumn(referencedColumnName = "id")
+  @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Team team;
 
   // TODO enum ProjectMembersPermissions
@@ -63,4 +62,9 @@ public class ProjectMembers {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Timestamp updatedAt;
 
+  public ProjectMembers(Account account, Project project, Team team) {
+    this.account = account;
+    this.project = project;
+    this.team = team;
+  }
 }

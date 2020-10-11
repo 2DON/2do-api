@@ -32,8 +32,8 @@ public class Account {
   @Column(nullable = false, unique = true, length = 45)
   private String email;
 
-  @Column(nullable = false, columnDefinition = "CHAR(60)")
   @JsonProperty(access = Access.WRITE_ONLY)
+  @Column(nullable = false, columnDefinition = "CHAR(60)")
   private String password;
 
   @Column(nullable = false, length = 45)
@@ -62,5 +62,4 @@ public class Account {
     this.email = email;
     this.password = password;
   }
-
 }

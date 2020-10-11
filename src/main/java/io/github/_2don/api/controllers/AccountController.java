@@ -24,12 +24,12 @@ import java.time.LocalDate;
 @RequestMapping("/accounts")
 public class AccountController {
 
-  private @Autowired
-  AccountJPA accountJPA;
-  private @Autowired
-  BCryptPasswordEncoder bcrypt;
-  private @Autowired
-  JWTConfig jwtConfig;
+  @Autowired
+  private AccountJPA accountJPA;
+  @Autowired
+  private BCryptPasswordEncoder bcrypt;
+  @Autowired
+  private JWTConfig jwtConfig;
 
   @GetMapping("/exists/{email}")
   public boolean exists(@PathVariable("email") String email) {
@@ -124,7 +124,8 @@ public class AccountController {
 
   @DeleteMapping("/delete")
   @ResponseStatus(HttpStatus.OK)
-  public void destroy(@AuthenticationPrincipal Long accountId, @RequestBody String password,
+  public void destroy(@AuthenticationPrincipal Long accountId,
+                      @RequestBody String password,
                       HttpServletResponse response) {
     var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
