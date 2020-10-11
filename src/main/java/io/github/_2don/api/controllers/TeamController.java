@@ -3,14 +3,17 @@ package io.github._2don.api.controllers;
 import io.github._2don.api.models.Team;
 import io.github._2don.api.repositories.AccountJPA;
 import io.github._2don.api.repositories.TeamJPA;
+import io.github._2don.api.utils.ImageEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -36,21 +39,37 @@ public class TeamController {
     return ResponseEntity.of(teamJPA.findById(teamId));
   }
 
-  @PutMapping("/{teamId}")
-  public Team override(@AuthenticationPrincipal Long accountId,
-                       @PathVariable("teamId") Long teamId, @Valid @RequestBody Team team) {
+  @PatchMapping("/{teamId}")
+  public Team edit(@AuthenticationPrincipal Long accountId,
+                   @PathVariable("teamId") Long teamId,
+                   @RequestPart(name = "name", required = false) String name,
+                   @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
+                   @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
     // TODO verify if user is part of the project
     // TODO verify if user has permission
 
-    var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
-    var teamEdit = teamJPA.findById(teamId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var team = teamJPA.findById(teamId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-    teamEdit.setName(team.getName());
-    // TODO recieve image (MultipartFile)
-    teamEdit.setAvatarUrl(team.getAvatarUrl());
-    teamEdit.setUpdatedBy(account);
+    if (name != null) {
+      if (name.length() < 1 || name.length() > 45) {
+        throw new ResponseStatusException((HttpStatus.BAD_REQUEST));
+      }
 
-    return teamJPA.save(teamEdit);
+      team.setName(name);
+    }
+
+    if (avatar != null) {
+      if (!ImageEncoder.MIME_TYPES.contains(avatar.getContentType())) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+      }
+
+      team.setAvatarUrl(ImageEncoder.encodeToString(avatar.getBytes()));
+    } else if (removeAvatar != null) {
+      team.setAvatarUrl(null);
+    }
+
+    team.setUpdatedBy(accountJPA.getOne(accountId));
+    return teamJPA.save(team);
   }
 
   @PostMapping

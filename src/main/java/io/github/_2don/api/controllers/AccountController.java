@@ -19,14 +19,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
 public class AccountController {
-
-  private static final List<String> avatarTypes =
-    List.of("image/png", "image/jpeg", "application/octet-stream");
 
   private @Autowired
   AccountJPA accountJPA;
@@ -66,9 +62,10 @@ public class AccountController {
                       @RequestPart(name = "password", required = false) String password,
                       @RequestPart(name = "name", required = false) String name,
                       @RequestPart(name = "options", required = false) String options,
+                      @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
                       @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
 
-    var stored = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
 
     if (email != null) {
       if (!Patterns.EMAIL.matches(email) || email.length() > 45) {
@@ -78,7 +75,7 @@ public class AccountController {
         throw new ResponseStatusException(HttpStatus.CONFLICT);
       }
 
-      stored.setEmail(email);
+      account.setEmail(email);
     }
 
     if (password != null) {
@@ -86,30 +83,32 @@ public class AccountController {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
 
-      stored.setPassword(bcrypt.encode(password));
+      account.setPassword(bcrypt.encode(password));
     }
 
     if (name != null) {
-      if (name.length() > 45) {
+      if (name.length() < 1 || name.length() > 45) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
 
-      stored.setName(name);
+      account.setName(name);
     }
 
     if (options != null) {
-      stored.setOptions(options);
+      account.setOptions(options);
     }
 
     if (avatar != null) {
-      if (!avatarTypes.contains(avatar.getContentType())) {
+      if (!ImageEncoder.MIME_TYPES.contains(avatar.getContentType())) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
 
-      stored.setAvatarUrl(ImageEncoder.encodeToString(avatar.getBytes()));
+      account.setAvatarUrl(ImageEncoder.encodeToString(avatar.getBytes()));
+    } else if (removeAvatar != null) {
+      account.setAvatarUrl(null);
     }
 
-    return accountJPA.save(stored);
+    return accountJPA.save(account);
   }
 
   @GetMapping("/info")
