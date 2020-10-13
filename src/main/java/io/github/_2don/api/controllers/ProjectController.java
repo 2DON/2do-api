@@ -1,36 +1,29 @@
 package io.github._2don.api.controllers;
 
 import io.github._2don.api.models.Project;
+import io.github._2don.api.repositories.AccountJPA;
+import io.github._2don.api.repositories.ProjectJPA;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-import io.github._2don.api.repositories.AccountJPA;
-import io.github._2don.api.repositories.ProjectJPA;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/projects")
 public class ProjectController {
 
-  private @Autowired ProjectJPA projectJPA;
-  private @Autowired AccountJPA accountJPA;
+  @Autowired
+  private ProjectJPA projectJPA;
+  @Autowired
+  private AccountJPA accountJPA;
 
   @GetMapping
   public List<Project> index() {
-
-
     return projectJPA.findAll();
   }
 
@@ -42,10 +35,10 @@ public class ProjectController {
 
   @PatchMapping("/{projectId}")
   public Project edit(@AuthenticationPrincipal Long accountId, @PathVariable("id") Long projectId,
-      @RequestBody Project project) {
+                      @RequestBody Project project) {
 
     var projectEdit = projectJPA.findById(projectId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
 
     if (project.getStatus() != null) {
@@ -98,7 +91,7 @@ public class ProjectController {
   @DeleteMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
-      @PathVariable("projectId") Long projectId) {
+                      @PathVariable("projectId") Long projectId) {
 
     projectJPA.delete(projectJPA.getOne(projectId));
 

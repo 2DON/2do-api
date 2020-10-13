@@ -33,14 +33,19 @@ public class AccountController {
 
   @GetMapping("/exists/{email}")
   public boolean exists(@PathVariable("email") String email) {
+    if (!Patterns.EMAIL.matches(email)) return false;
+
     return accountJPA.existsByEmail(email);
   }
 
   @PostMapping("/sign-up")
   @ResponseStatus(HttpStatus.CREATED)
   public void signUp(@RequestBody Account account) {
-    if (account.getEmail() == null || !Patterns.EMAIL.matches(account.getEmail()) || account.getEmail().length() > 45
-      || account.getPassword() == null || account.getPassword().length() < 8) {
+    if (account.getEmail() == null
+      || !Patterns.EMAIL.matches(account.getEmail())
+      || account.getEmail().length() > 45
+      || account.getPassword() == null
+      || account.getPassword().length() < 8) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
     }
 
@@ -115,7 +120,6 @@ public class AccountController {
   public ResponseEntity<Account> info(@AuthenticationPrincipal Long accountId) {
     return ResponseEntity.of(accountJPA.findById(accountId));
   }
-
 
   @GetMapping("/info/{id}")
   public ResponseEntity<PublicAccount> show(@PathVariable("id") Long accountId) {

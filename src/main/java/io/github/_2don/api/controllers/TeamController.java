@@ -3,10 +3,10 @@ package io.github._2don.api.controllers;
 import io.github._2don.api.models.Team;
 import io.github._2don.api.repositories.AccountJPA;
 import io.github._2don.api.repositories.TeamJPA;
+import io.github._2don.api.repositories.TeamMembersJPA;
 import io.github._2don.api.utils.ImageEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,23 +20,43 @@ import java.util.List;
 @RequestMapping("/teams")
 public class TeamController {
 
-  private @Autowired
-  TeamJPA teamJPA;
-  private @Autowired
-  AccountJPA accountJPA;
+  @Autowired
+  private TeamJPA teamJPA;
+  @Autowired
+  private AccountJPA accountJPA;
+  @Autowired
+  private TeamMembersJPA teamMembersJPA;
 
   @GetMapping
   public List<Team> index() {
-    // TODO just for testing, REDO
+    // TODO should return a list of all the teams you are part of
 
     return teamJPA.findAll();
   }
 
-  @GetMapping("/{teamId}")
-  public ResponseEntity<Team> show(@PathVariable("teamId") Long teamId) {
-    // TODO verify if user is part of the project
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public Team store(@AuthenticationPrincipal Long accountId,
+                    @Valid @RequestBody Team team) {
+    // TODO non premium can only be part of one team?
 
-    return ResponseEntity.of(teamJPA.findById(teamId));
+    var account = accountJPA.getOne(accountId);
+
+    team.setCreatedBy(account);
+    team.setUpdatedBy(account);
+
+    return teamJPA.save(team);
+  }
+
+  @GetMapping("/{teamId}")
+  public Team show(@AuthenticationPrincipal Long accountId,
+                   @PathVariable("teamId") Long teamId) {
+    if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    return teamJPA.findById(teamId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   }
 
   @PatchMapping("/{teamId}")
@@ -45,8 +65,11 @@ public class TeamController {
                    @RequestPart(name = "name", required = false) String name,
                    @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
                    @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
-    // TODO verify if user is part of the project
-    // TODO verify if user has permission
+    var teamMeta = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    if (!teamMeta.getOperator()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
 
     var team = teamJPA.findById(teamId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -72,26 +95,17 @@ public class TeamController {
     return teamJPA.save(team);
   }
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public Team store(@AuthenticationPrincipal Long accountId,
-                    @Valid @RequestBody Team team) {
-    var account = accountJPA.getOne(accountId);
-
-    team.setCreatedBy(account);
-    team.setUpdatedBy(account);
-
-    return teamJPA.save(team);
-  }
-
   @DeleteMapping("/{teamId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @PathVariable("teamId") Long teamId) {
-    // TODO verify if user is part of the project
-    // TODO verify if user has permission
-    // TODO verify if project exists
+    var teamMeta = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    if (!teamMeta.getOperator()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
 
+    // TODO just delete?
     teamJPA.delete(teamJPA.getOne(teamId));
   }
 
