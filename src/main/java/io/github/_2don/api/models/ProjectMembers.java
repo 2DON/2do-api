@@ -21,12 +21,11 @@ import java.sql.Timestamp;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectMembers {
 
-  // FIXME field is NOT NULL, but shout not be
   @Id
   @ManyToOne
-  @JoinColumn(referencedColumnName = "id")
   @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JoinColumn(referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account account;
 
@@ -38,8 +37,6 @@ public class ProjectMembers {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Project project;
 
-  // FIXME field is NOT NULL, but shout not be
-  @Id
   @ManyToOne
   @JoinColumn(referencedColumnName = "id")
   @JsonIdentityReference(alwaysAsId = true)

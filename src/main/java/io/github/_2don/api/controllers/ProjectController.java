@@ -3,9 +3,9 @@ package io.github._2don.api.controllers;
 import io.github._2don.api.models.Project;
 import io.github._2don.api.repositories.AccountJPA;
 import io.github._2don.api.repositories.ProjectJPA;
+import io.github._2don.api.repositories.ProjectMembersJPA;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -21,21 +21,50 @@ public class ProjectController {
   private ProjectJPA projectJPA;
   @Autowired
   private AccountJPA accountJPA;
+  @Autowired
+  private ProjectMembersJPA projectMembersJPA;
 
   @GetMapping
   public List<Project> index() {
+    // TODO should return a list of all the projects you are part of
+
     return projectJPA.findAll();
   }
 
-  @GetMapping("/{projectId}")
-  public ResponseEntity<Project> show(@PathVariable("id") Long id) {
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public Project store(@AuthenticationPrincipal Long accountId,
+                       @Validated @RequestBody Project project) {
+    // TODO non premium can only be part of one team?
 
-    return ResponseEntity.of(projectJPA.findById(id));
+    var account = accountJPA.getOne(accountId);
+
+    project.setCreatedBy(account);
+    project.setUpdatedBy(account);
+
+    return projectJPA.save(project);
+  }
+
+  @GetMapping("/{projectId}")
+  public Project show(@AuthenticationPrincipal Long accountId,
+                      @PathVariable("id") Long projectId) {
+    if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    return projectJPA.findById(projectId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   }
 
   @PatchMapping("/{projectId}")
-  public Project edit(@AuthenticationPrincipal Long accountId, @PathVariable("id") Long projectId,
+  public Project edit(@AuthenticationPrincipal Long accountId,
+                      @PathVariable("id") Long projectId,
                       @RequestBody Project project) {
+    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    if (projectMeta.getPermissions() == 0) {// TODO change `== 0` to < ProjectMemberPermission.PERM.?
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
 
     var projectEdit = projectJPA.findById(projectId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -77,23 +106,17 @@ public class ProjectController {
     return projectJPA.save(projectEdit);
   }
 
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
-  public Project store(@AuthenticationPrincipal Long accountId, @Validated @RequestBody Project project) {
-    var account = accountJPA.getOne(accountId);
-
-    project.setCreatedBy(account);
-    project.setUpdatedBy(account);
-
-    return projectJPA.save(project);
-  }
-
   @DeleteMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @PathVariable("projectId") Long projectId) {
+    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    if (projectMeta.getPermissions() == 0) {// TODO change `== 0` to < ProjectMemberPermission.PERM.?
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
 
+    // TODO just delete?
     projectJPA.delete(projectJPA.getOne(projectId));
-
   }
 }
