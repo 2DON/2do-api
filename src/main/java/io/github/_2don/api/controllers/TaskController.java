@@ -43,16 +43,16 @@ public class TaskController {
 
   @GetMapping("/{taskId}")
   public ResponseEntity<Task> show(@PathVariable("taskId") Long taskId) {
-
     return ResponseEntity.of(taskJPA.findById(taskId));
   }
 
   @PatchMapping("/{taskId}")
-  public Task edit(@AuthenticationPrincipal Long accountId, @PathVariable("taskId") Long taskId,
-      @RequestBody Task task) {
+  public Task edit(@AuthenticationPrincipal Long accountId,
+                   @PathVariable("taskId") Long taskId,
+                   @RequestBody Task task) {
 
     var taskEdit = taskJPA.findById(taskId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (task.getOrdinal() != null) {
       taskEdit.setOrdinal(task.getOrdinal());
@@ -84,7 +84,7 @@ public class TaskController {
   @DeleteMapping("/{taskId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
-      @PathVariable("taskId") Long taskId) {
+                      @PathVariable("taskId") Long taskId) {
 
     taskJPA.delete(taskJPA.getOne(taskId));
   }

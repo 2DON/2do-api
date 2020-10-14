@@ -41,10 +41,10 @@ public class ProjectMembers {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Team team;
 
-  // TODO enum ProjectMembersPermissions
   @NotNull
   @Column(nullable = false)
-  private Byte permissions;
+  @Enumerated(EnumType.ORDINAL)
+  private ProjectMembersPermissions permissions;
 
   @CreationTimestamp
   @Column(nullable = false)

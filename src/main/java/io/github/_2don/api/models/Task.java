@@ -40,9 +40,9 @@ public class Task {
   @Column(nullable = false)
   private String description;
 
-  // TODO: enum TaskStatus
   @Column(nullable = false)
-  private Byte status;
+  @Enumerated(EnumType.ORDINAL)
+  private TaskStatus status;
 
   @Column(columnDefinition = "TEXT")
   private String options;

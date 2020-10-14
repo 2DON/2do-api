@@ -40,9 +40,9 @@ public class Step {
   @Column(nullable = false)
   private String description;
 
-  // TODO: enum StepStatus or the same as TaskStatus
   @Column(nullable = false)
-  private Byte status;
+  @Enumerated(EnumType.ORDINAL)
+  private StepStatus status;
 
   @Column(length = 250)
   private String observation;

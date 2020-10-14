@@ -1,6 +1,7 @@
 package io.github._2don.api.controllers;
 
 import io.github._2don.api.models.Project;
+import io.github._2don.api.models.ProjectMembersPermissions;
 import io.github._2don.api.repositories.AccountJPA;
 import io.github._2don.api.repositories.ProjectJPA;
 import io.github._2don.api.repositories.ProjectMembersJPA;
@@ -62,7 +63,7 @@ public class ProjectController {
                       @RequestBody Project project) {
     var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions() == 0) {// TODO change `== 0` to < ProjectMemberPermission.PERM.?
+    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
@@ -112,7 +113,7 @@ public class ProjectController {
                       @PathVariable("projectId") Long projectId) {
     var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions() == 0) {// TODO change `== 0` to < ProjectMemberPermission.PERM.?
+    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.ALL) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
