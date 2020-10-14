@@ -3,10 +3,8 @@ package io.github._2don.api.models;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.Column;
@@ -16,11 +14,10 @@ import javax.persistence.Id;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+@Data
 @Entity
-@Setter
-@Getter
-@ToString
 @NoArgsConstructor
+@Accessors(chain = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Account {
 

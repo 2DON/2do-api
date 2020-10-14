@@ -23,7 +23,8 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
   private final JWTConfig jwtConfig;
   private final AuthenticationManager authman;
 
-  public JWTAuthenticationFilter(JWTConfig jwtConfig, AuthenticationManager authman,
+  public JWTAuthenticationFilter(JWTConfig jwtConfig,
+                                 AuthenticationManager authman,
                                  String filterProcessesUrl) {
     this.jwtConfig = jwtConfig;
     this.authman = authman;
@@ -48,8 +49,10 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     // use the credentials to attempt authentication
     try {
-      return authman.authenticate(new UsernamePasswordAuthenticationToken(credentials.getEmail(),
-        credentials.getPassword(), Collections.emptyList()));
+      return authman.authenticate(new UsernamePasswordAuthenticationToken(
+        credentials.getEmail(),
+        credentials.getPassword(),
+        Collections.emptyList()));
     } catch (ResponseStatusException exception) {
       response.setStatus(exception.getStatus().value());
     }
@@ -58,8 +61,10 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
   }
 
   @Override
-  protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
-                                          FilterChain chain, Authentication auth) throws IOException, ServletException {
+  protected void successfulAuthentication(HttpServletRequest request,
+                                          HttpServletResponse response,
+                                          FilterChain chain,
+                                          Authentication auth) throws IOException, ServletException {
 
     var accountId = (Long) auth.getPrincipal();
 

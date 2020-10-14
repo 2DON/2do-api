@@ -21,7 +21,8 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
   private final AccountJPA accountJPA;
   private final JWTConfig jwtConfig;
 
-  public JWTAuthorizationFilter(JWTConfig jwtConfig, AccountJPA accountJPA,
+  public JWTAuthorizationFilter(JWTConfig jwtConfig,
+                                AccountJPA accountJPA,
                                 AuthenticationManager authman) {
     super(authman);
     this.accountJPA = accountJPA;
@@ -29,7 +30,8 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
   }
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+  protected void doFilterInternal(HttpServletRequest request,
+                                  HttpServletResponse response,
                                   FilterChain chain) throws IOException, ServletException {
 
     var header = request.getHeader(jwtConfig.getTokenHeader());

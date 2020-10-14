@@ -1,10 +1,8 @@
 package io.github._2don.api.models;
 
 import com.fasterxml.jackson.annotation.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
+import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,11 +10,10 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 
+@Data
 @Entity
-@Setter
-@Getter
-@ToString
 @NoArgsConstructor
+@Accessors(chain = true)
 @IdClass(ProjectMembersId.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectMembers {

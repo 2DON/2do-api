@@ -1,15 +1,13 @@
 package io.github._2don.api.security;
 
 import io.github._2don.api.repositories.AccountJPA;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.sql.Date;
 
-@Getter
-@Setter
-@ToString
+@Data
+@Accessors(chain = true)
 public class Credentials implements AccountJPA.CredentialsProjection {
 
   private Long id;

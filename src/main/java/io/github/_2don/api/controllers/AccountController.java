@@ -53,9 +53,10 @@ public class AccountController {
       throw new ResponseStatusException(HttpStatus.CONFLICT);
     }
 
-    account.setPassword(bcrypt.encode(account.getPassword()));
-    account.setName(account.getEmail());
-    account.setOptions(null);
+    account
+      .setPassword(bcrypt.encode(account.getPassword()))
+      .setName(account.getEmail())
+      .setOptions(null);
 
     accountJPA.save(account);
   }

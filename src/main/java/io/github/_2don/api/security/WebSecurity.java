@@ -42,7 +42,8 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
         new JWTAuthenticationFilter(jwtConfig, authenticationManager(), "/accounts/sign-in"),
         UsernamePasswordAuthenticationFilter.class)
       // check if users are logged in
-      .addFilterAt(new JWTAuthorizationFilter(jwtConfig, accountJPA, authenticationManager()),
+      .addFilterAt(
+        new JWTAuthorizationFilter(jwtConfig, accountJPA, authenticationManager()),
         BasicAuthenticationFilter.class)
       // disable token storage because jwt does not need it
       .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);

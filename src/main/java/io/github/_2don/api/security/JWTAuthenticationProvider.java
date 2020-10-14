@@ -4,7 +4,6 @@ import io.github._2don.api.repositories.AccountJPA;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,13 +25,14 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
     var email = authentication.getName();
     var password = authentication.getCredentials().toString();
 
-    var account =
-      accountJPA.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findByEmail(email)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (account.getDeleteRequest() != null) {
       if (account.getDeleteRequest().compareTo(new Date(System.currentTimeMillis())) > 0) {
         // account is still valid, so we will cancel the delete request
-        var stored = accountJPA.findById(account.getId()).orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
+        var stored = accountJPA.findById(account.getId())
+          .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
         stored.setDeleteRequest(null);
         accountJPA.save(stored);
       } else {
