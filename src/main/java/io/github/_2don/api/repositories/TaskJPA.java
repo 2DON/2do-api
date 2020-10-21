@@ -5,4 +5,5 @@ import io.github._2don.api.models.Task;
 
 public interface TaskJPA extends JpaRepository<Task, Long> {
 
+  Boolean existsByTaskIdAndProjectId(Long taskId, Long projectId);
 }

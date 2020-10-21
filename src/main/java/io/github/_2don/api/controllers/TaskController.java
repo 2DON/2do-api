@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -49,7 +50,7 @@ public class TaskController {
   @PatchMapping("/{taskId}")
   public Task edit(@AuthenticationPrincipal Long accountId,
                    @PathVariable("taskId") Long taskId,
-                   @RequestBody Task task) {
+                   @Validated @RequestBody Task task) {
 
     var taskEdit = taskJPA.findById(taskId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
