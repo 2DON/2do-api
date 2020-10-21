@@ -6,7 +6,7 @@ public enum ProjectMembersPermissions {
    */
   VIEW,
   /**
-   * Can add, modify, complete and remote tasks and steps
+   * Can add, modify, complete and remove tasks and steps
    */
   MODIFY,
   /**

@@ -56,9 +56,13 @@ public class ProjectMembers {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Timestamp updatedAt;
 
-  public ProjectMembers(Account account, Project project, Team team) {
+  public ProjectMembers(Account account,
+                        Project project,
+                        Team team,
+                        ProjectMembersPermissions permissions) {
     this.account = account;
     this.project = project;
     this.team = team;
+    this.permissions = permissions;
   }
 }

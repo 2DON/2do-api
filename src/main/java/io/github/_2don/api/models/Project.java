@@ -2,7 +2,8 @@ package io.github._2don.api.models;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -24,14 +25,13 @@ public class Project {
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
+  @Column(nullable = false)
+  private Integer ordinal = Integer.MAX_VALUE;
+
   @NotNull
   @NotBlank
   @Column(columnDefinition = "TEXT", nullable = false)
   private String description;
-
-  // TODO: enum ProjectStatus
-  @Column(nullable = false)
-  private Byte status;
 
   @Column(length = 250)
   private String observation;

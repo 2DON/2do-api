@@ -1,6 +1,7 @@
 package io.github._2don.api.controllers;
 
 import io.github._2don.api.models.Project;
+import io.github._2don.api.models.ProjectMembers;
 import io.github._2don.api.models.ProjectMembersPermissions;
 import io.github._2don.api.repositories.AccountJPA;
 import io.github._2don.api.repositories.ProjectJPA;
@@ -12,7 +13,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/projects")
@@ -26,24 +29,39 @@ public class ProjectController {
   private ProjectMembersJPA projectMembersJPA;
 
   @GetMapping
-  public List<Project> index() {
-    // TODO should return a list of all the projects you are part of
-
-    return projectJPA.findAll();
+  public List<Project> index(@AuthenticationPrincipal Long accountId,
+                             @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
+    return projectMembersJPA
+      .findAllByAccountId(accountId)
+      .stream()
+      .map(ProjectMembers::getProject)
+      .filter(project -> project.getArchived() == archived)
+      .sorted(Comparator.comparingInt(Project::getOrdinal))
+      .collect(Collectors.toList());
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public Project store(@AuthenticationPrincipal Long accountId,
                        @Validated @RequestBody Project project) {
-    // TODO non premium can only be part of one team?
-
-    var account = accountJPA.getOne(accountId);
+    var account = accountJPA.findById(accountId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    if (!account.getPremium() && projectMembersJPA.existsByAccountId(accountId)) {
+      throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
+    }
 
     project.setCreatedBy(account);
     project.setUpdatedBy(account);
 
-    return projectJPA.save(project);
+    project = projectJPA.save(project);
+
+    projectMembersJPA.save(new ProjectMembers(
+      account,
+      project,
+      null,
+      ProjectMembersPermissions.ALL));
+
+    return project;
   }
 
   @GetMapping("/{projectId}")
@@ -70,9 +88,13 @@ public class ProjectController {
     var projectEdit = projectJPA.findById(projectId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
+    // project is archived and the request don't unarchive it
+    if (projectEdit.getArchived() && (project.getArchived() == null || !project.getArchived())) {
+      throw new ResponseStatusException(HttpStatus.LOCKED);
+    }
 
-    if (project.getStatus() != null) {
-      projectEdit.setStatus(project.getStatus());
+    if (project.getArchived() != null) {
+      projectEdit.setArchived(project.getArchived());
     }
 
     if (project.getDescription() != null) {
@@ -80,10 +102,6 @@ public class ProjectController {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
       projectEdit.setDescription(project.getDescription());
-    }
-
-    if (project.getArchived() != null) {
-      projectEdit.setArchived(project.getArchived());
     }
 
     if (projectEdit.getObservation() != null) {
@@ -117,7 +135,8 @@ public class ProjectController {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    // TODO just delete?
+    // TODO delete project + members + tasks + steps
+    // TODO set delete cascade on tasks and steps
     projectJPA.delete(projectJPA.getOne(projectId));
   }
 }

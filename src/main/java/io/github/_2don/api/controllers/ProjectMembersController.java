@@ -6,5 +6,5 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/projects/members")
 public class ProjectMembersController {
-
+  // TODO max 5 members to non-premium
 }
