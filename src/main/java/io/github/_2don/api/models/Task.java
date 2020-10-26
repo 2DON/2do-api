@@ -2,7 +2,8 @@ package io.github._2don.api.models;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -24,7 +25,6 @@ public class Task {
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
-  // TODO LAZY?
   @ManyToOne
   @JsonIgnore
   @JsonIdentityReference(alwaysAsId = true)
@@ -42,15 +42,15 @@ public class Task {
 
   @Column(nullable = false)
   @Enumerated(EnumType.ORDINAL)
-  private TaskStatus status;
+  private TaskStatus status = TaskStatus.IN_PROGRESS;
 
   @Column(columnDefinition = "TEXT")
   private String options;
 
   @ManyToOne
   @JsonIdentityReference(alwaysAsId = true)
+  @JoinColumn(name = "assigned_to", referencedColumnName = "id")
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  @JoinColumn(name = "assigned_to", referencedColumnName = "id", nullable = false)
   private Account assignedTo;
 
   @CreationTimestamp

@@ -2,7 +2,8 @@ package io.github._2don.api.models;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -24,7 +25,6 @@ public class Step {
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
-  // TODO LAZY?
   @ManyToOne
   @JsonIgnore
   @JsonIdentityReference(alwaysAsId = true)
@@ -42,7 +42,7 @@ public class Step {
 
   @Column(nullable = false)
   @Enumerated(EnumType.ORDINAL)
-  private StepStatus status;
+  private StepStatus status = StepStatus.IN_PROGRESS;
 
   @Column(length = 250)
   private String observation;

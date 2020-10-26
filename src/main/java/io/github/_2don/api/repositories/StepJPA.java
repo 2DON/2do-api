@@ -1,11 +1,19 @@
 package io.github._2don.api.repositories;
 
+import io.github._2don.api.models.Step;
+import io.github._2don.api.models.Task;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
-import io.github._2don.api.models.Step;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface StepJPA extends JpaRepository<Step, Long> {
 
-  List<Step> findAllByTaskId(Long taskId, Sort sort);}
+  List<Step> findAllByTaskId(Long taskId, Sort sort);
+
+  boolean existsByIdAndTaskId(Long taskId, Long projectId);
+
+  Optional<Task> findByIdAndTaskId(Long taskId, Long projectId);
+
+}

@@ -7,7 +7,6 @@ import io.github._2don.api.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
+@RequestMapping("/projects/{projectId}/tasks/{taskId}/steps")
 public class StepController {
 
   @Autowired
@@ -29,82 +29,104 @@ public class StepController {
   @Autowired
   private StepJPA stepJPA;
 
-  @GetMapping("/projects/{projectId}/tasks/{taskId}")
+  @GetMapping
   public List<Step> index(@AuthenticationPrincipal Long accountId,
                           @PathVariable("projectId") Long projectId,
                           @PathVariable("taskId") Long taskId) {
-    if(!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)){
+
+    // account is member of project
+    if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
-    if (!taskJPA.existsByTaskIdAndProjectId(taskId, projectId)){
+
+    // task exists and belongs to project
+    if (!taskJPA.existsByIdAndProjectId(taskId, projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
     return stepJPA.findAllByTaskId(taskId, Sort.by(Sort.Direction.ASC, "ordinal"));
   }
 
-  @PostMapping("/projects/{projectId}/tasks/{taskId}")
+  @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public Step store(@AuthenticationPrincipal Long accountId,
                     @Validated @RequestBody Step step,
                     @PathVariable("projectId") Long projectId,
                     @PathVariable("taskId") Long taskId) {
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0){
+
+    // account is member of project and has permission
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    if (!taskJPA.existsByTaskIdAndProjectId(taskId, projectId)){
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-    }
+    // task exists and belongs to project
+    var task = taskJPA
+      .findByIdAndProjectId(taskId, projectId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     var account = accountJPA.getOne(accountId);
 
-    step.setCreatedBy(account);
-    step.setUpdatedBy(account);
+    step
+      .setCreatedBy(account)
+      .setUpdatedBy(account)
+      .setTask(task);
 
     return stepJPA.save(step);
   }
 
-  @GetMapping("/projects/{projectId}/tasks/{taskId}/steps/{stepsId}")
-  public ResponseEntity<Step> show(@AuthenticationPrincipal Long accountId,
-                                   @PathVariable("stepsId") Long stepsId,
-                                   @PathVariable("projectId") Long projectId,
-                                   @PathVariable("taskId") Long taskId) {
+  @GetMapping("/{stepId}")
+  public Step show(@AuthenticationPrincipal Long accountId,
+                   @PathVariable("stepId") Long stepId,
+                   @PathVariable("projectId") Long projectId,
+                   @PathVariable("taskId") Long taskId) {
 
+    // account is member of project
     if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    if (!taskJPA.existsByTaskIdAndProjectId(taskId, projectId)){
+    // step exists and belongs to task and project
+    var step = stepJPA.findById(stepId).orElse(null);
+    if (step == null
+      || !step.getTask().getId().equals(taskId)
+      || !step.getTask().getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    return ResponseEntity.of(stepJPA.findById(stepsId));
+    return step;
   }
 
-  @PatchMapping("/projects/{projectId}/tasks/{taskId}/steps/{stepsId}")
+  @PatchMapping("/{stepId}")
   public Step edit(@AuthenticationPrincipal Long accountId,
-                   @PathVariable("stepsId") Long stepsId,
+                   @PathVariable("stepId") Long stepId,
                    @PathVariable("projectId") Long projectId,
                    @PathVariable("taskId") Long taskId,
                    @RequestBody Step step) {
 
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
+    // account is member of project and has permission
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
-    if (!taskJPA.existsByTaskIdAndProjectId(taskId, projectId)){
+
+    // step exists and belongs to task and project
+    var stepEdit = stepJPA.findById(stepId).orElse(null);
+    if (stepEdit == null
+      || !stepEdit.getTask().getId().equals(taskId)
+      || !stepEdit.getTask().getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    var stepEdit = stepJPA.findById(stepsId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
     if (step.getDescription() != null) {
-      if (step.getDescription().length() == 0) {
+      if (step.getDescription().length() == 0
+        || step.getDescription().length() <= 80) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
       stepEdit.setDescription(step.getDescription());
@@ -122,6 +144,9 @@ public class StepController {
       if (step.getObservation().length() == 0) {
         stepEdit.setObservation(null);
       }
+      if (step.getDescription().length() > 250) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+      }
       stepEdit.setObservation(step.getObservation());
     }
 
@@ -130,25 +155,30 @@ public class StepController {
     return stepJPA.save(stepEdit);
   }
 
-  @DeleteMapping("/projects/{projectId}/tasks/{taskId}/steps/{stepsId}")
+  @DeleteMapping("/{stepId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @PathVariable("stepId") Long stepId,
                       @PathVariable("projectId") Long projectId,
-                      @PathVariable("taskId") Long taskId
-                      ) {
+                      @PathVariable("taskId") Long taskId) {
 
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
+    // account is member of project and has permission
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    if (!taskJPA.existsByTaskIdAndProjectId(taskId, projectId)) {
+    // step exists and belongs to task and project
+    var step = stepJPA.findById(stepId).orElse(null);
+    if (step == null
+      || !step.getTask().getId().equals(taskId)
+      || !step.getTask().getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    stepJPA.delete(stepJPA.getOne(stepId));
-
+    stepJPA.delete(step);
   }
 }

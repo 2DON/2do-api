@@ -1,6 +1,7 @@
 package io.github._2don.api.controllers;
 
 import io.github._2don.api.models.Team;
+import io.github._2don.api.models.TeamMembers;
 import io.github._2don.api.repositories.AccountJPA;
 import io.github._2don.api.repositories.TeamJPA;
 import io.github._2don.api.repositories.TeamMembersJPA;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/teams")
@@ -28,19 +30,24 @@ public class TeamController {
   private TeamMembersJPA teamMembersJPA;
 
   @GetMapping
-  public List<Team> index() {
-    // TODO should return a list of all the teams you are part of
+  public List<Team> index(@AuthenticationPrincipal Long accountId) {
 
-    return teamJPA.findAll();
+    return teamMembersJPA
+      .findAllByAccountId(accountId)
+      .stream()
+      .map(TeamMembers::getTeam)
+      .collect(Collectors.toList());
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public Team store(@AuthenticationPrincipal Long accountId,
                     @Valid @RequestBody Team team) {
-    // TODO non premium can only be part of one team?
 
-    var account = accountJPA.getOne(accountId);
+    var account = accountJPA.findById(accountId).orElse(null);
+    if (account == null || !account.getPremium()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
 
     team.setCreatedBy(account);
     team.setUpdatedBy(account);

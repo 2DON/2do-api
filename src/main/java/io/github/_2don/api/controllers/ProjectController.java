@@ -31,6 +31,7 @@ public class ProjectController {
   @GetMapping
   public List<Project> index(@AuthenticationPrincipal Long accountId,
                              @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
+
     return projectMembersJPA
       .findAllByAccountId(accountId)
       .stream()
@@ -44,9 +45,13 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.CREATED)
   public Project store(@AuthenticationPrincipal Long accountId,
                        @Validated @RequestBody Project project) {
+
     var account = accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (!account.getPremium() && projectMembersJPA.existsByAccountId(accountId)) {
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
+
+    if (!account.getPremium()
+      && projectMembersJPA.existsByAccountId(accountId)) {
+      // non-premium accounts can have only one project
       throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
     }
 
@@ -55,6 +60,7 @@ public class ProjectController {
 
     project = projectJPA.save(project);
 
+    // add the owner as a member
     projectMembersJPA.save(new ProjectMembers(
       account,
       project,
@@ -67,28 +73,32 @@ public class ProjectController {
   @GetMapping("/{projectId}")
   public Project show(@AuthenticationPrincipal Long accountId,
                       @PathVariable("id") Long projectId) {
-    if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
 
-    return projectJPA.findById(projectId)
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+    return projectMeta.getProject();
   }
 
   @PatchMapping("/{projectId}")
   public Project edit(@AuthenticationPrincipal Long accountId,
                       @PathVariable("id") Long projectId,
                       @RequestBody Project project) {
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
+
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
+      // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    var projectEdit = projectJPA.findById(projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var projectEdit = projectMeta.getProject();
 
     // project is archived and the request don't unarchive it
+    // TODO archiving deserves his own route?
     if (projectEdit.getArchived() && (project.getArchived() == null || !project.getArchived())) {
       throw new ResponseStatusException(HttpStatus.LOCKED);
     }
@@ -129,14 +139,19 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @PathVariable("projectId") Long projectId) {
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.ALL) < 0) {
+
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
+      // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     // TODO delete project + members + tasks + steps
     // TODO set delete cascade on tasks and steps
+    // TODO backup project for X time
     projectJPA.delete(projectJPA.getOne(projectId));
   }
 }

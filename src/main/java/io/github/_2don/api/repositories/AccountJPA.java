@@ -1,10 +1,11 @@
 package io.github._2don.api.repositories;
 
-import java.sql.Date;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
 import io.github._2don.api.models.Account;
 import io.github._2don.api.projections.PublicAccount;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.sql.Date;
+import java.util.Optional;
 
 public interface AccountJPA extends JpaRepository<Account, Long> {
   boolean existsByEmail(String email);
@@ -13,7 +14,7 @@ public interface AccountJPA extends JpaRepository<Account, Long> {
 
   Optional<PublicAccount> findPublicById(Long id);
 
-  public static interface CredentialsProjection {
+  interface CredentialsProjection {
 
     Long getId();
 

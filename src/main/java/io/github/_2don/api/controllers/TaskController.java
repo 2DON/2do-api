@@ -18,7 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/projects/tasks")
+@RequestMapping("/projects/{projectId}/tasks")
 public class TaskController {
 
   @Autowired
@@ -30,10 +30,11 @@ public class TaskController {
   @Autowired
   private ProjectMembersJPA projectMembersJPA;
 
-  @GetMapping("/projects/{projectsId}")
+  @GetMapping
   public List<Task> index(@AuthenticationPrincipal Long accountId,
-                          @PathVariable("projectsId") Long projectId) {
+                          @PathVariable("projectId") Long projectId) {
 
+    // account is member of project
     if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -41,55 +42,68 @@ public class TaskController {
     return taskJPA.findAllByProjectId(projectId, Sort.by(Sort.Direction.ASC, "ordinal"));
   }
 
-  @PostMapping("/projects/{projectsId}")
+  @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public Task store(@AuthenticationPrincipal Long accountId,
                     @Validated @RequestBody Task task,
-                    @PathVariable("projectsId") Long projectId) {
+                    @PathVariable("projectId") Long projectId) {
 
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
+    // account is member of project and has permission
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     var account = accountJPA.getOne(accountId);
 
-    task.setCreatedBy(account);
-    task.setUpdatedBy(account);
+    task
+      .setCreatedBy(account)
+      .setUpdatedBy(account)
+      .setProject(projectMeta.getProject());
 
     return taskJPA.save(task);
   }
 
-  @GetMapping("/projects/{projectsId}/task/{taskId}")
+  @GetMapping("/{taskId}")
   public ResponseEntity<Task> show(@AuthenticationPrincipal Long accountId,
-                                   @PathVariable("projectsId") Long projectId,
+                                   @PathVariable("projectId") Long projectId,
                                    @PathVariable("taskId") Long taskId) {
 
+    // account is member of project
     if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    if (!taskJPA.existsById(taskId)) {
+    // task exists and belongs to project
+    var task = taskJPA.findById(taskId).orElse(null);
+    if (task == null
+      || !task.getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
     return ResponseEntity.of(taskJPA.findById(taskId));
   }
 
-  @PatchMapping("/projects/{projectsId}/task/{taskId}")
+  @PatchMapping("/{taskId}")
   public Task edit(@AuthenticationPrincipal Long accountId,
                    @PathVariable("taskId") Long taskId,
-                   @PathVariable("projectsId") Long projectId,
-                   @Validated @RequestBody Task task) {
+                   @PathVariable("projectId") Long projectId,
+                   @RequestBody Task task) {
 
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
+    // account is member of project and has permission
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    var taskEdit = taskJPA.findById(taskId)
+    var taskEdit = taskJPA
+      .findByIdAndProjectId(taskId, projectId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (task.getOrdinal() != null) {
@@ -97,7 +111,8 @@ public class TaskController {
     }
 
     if (task.getDescription() != null) {
-      if (task.getDescription().length() == 0) {
+      if (task.getDescription().length() == 0
+        || task.getDescription().length() <= 80) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
       taskEdit.setDescription(task.getDescription());
@@ -114,26 +129,36 @@ public class TaskController {
       taskEdit.setOptions(task.getOptions());
     }
 
+    if (task.getAssignedTo() != null) {
+      taskEdit.setAssignedTo(task.getAssignedTo());
+    }
+
     taskEdit.setUpdatedBy(accountJPA.getOne(accountId));
 
     return taskJPA.save(taskEdit);
   }
 
-  @DeleteMapping("/projects/{projectsId}/task/{taskId}")
+  @DeleteMapping("/{taskId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @PathVariable("taskId") Long taskId,
-                      @PathVariable("projectsId") Long projectId) {
-    var projectMeta = projectMembersJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-    if (projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0){
+                      @PathVariable("projectId") Long projectId) {
+
+    // account is member of project and has permission
+    var projectMeta = projectMembersJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElse(null);
+    if (projectMeta == null
+      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    if (!taskJPA.existsById(taskId)){
+    var task = taskJPA.findById(taskId).orElse(null);
+    if (task == null
+      || !task.getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
-    taskJPA.delete(taskJPA.getOne(taskId));
+    taskJPA.delete(task);
   }
 }

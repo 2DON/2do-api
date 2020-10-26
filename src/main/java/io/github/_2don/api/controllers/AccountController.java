@@ -41,6 +41,7 @@ public class AccountController {
   @PostMapping("/sign-up")
   @ResponseStatus(HttpStatus.CREATED)
   public void signUp(@RequestBody Account account) {
+
     if (account.getEmail() == null
       || !Patterns.EMAIL.matches(account.getEmail())
       || account.getEmail().length() > 45
@@ -71,7 +72,8 @@ public class AccountController {
                       @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
                       @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
 
-    var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
+    var account = accountJPA.findById(accountId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
 
     if (email != null) {
       if (!Patterns.EMAIL.matches(email) || email.length() > 45) {
@@ -132,6 +134,7 @@ public class AccountController {
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @RequestBody String password,
                       HttpServletResponse response) {
+
     var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (!bcrypt.matches(password, account.getPassword())) {
