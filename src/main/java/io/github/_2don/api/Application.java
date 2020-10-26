@@ -1,6 +1,6 @@
 package io.github._2don.api;
 
-import io.github._2don.api.security.JWTAuthenticationProvider;
+import io.github._2don.api.jwt.JWTAuthenticationProvider;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
