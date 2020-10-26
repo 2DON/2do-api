@@ -1,4 +1,4 @@
-package io.github._2don.api.teammembers;
+package io.github._2don.api.teammember;
 
 import io.github._2don.api.account.Account;
 import io.github._2don.api.team.Team;

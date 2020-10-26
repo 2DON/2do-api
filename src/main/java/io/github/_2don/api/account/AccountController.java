@@ -29,7 +29,7 @@ public class AccountController {
   private JWTConfig jwtConfig;
 
   @GetMapping("/exists/{email}")
-  public boolean exists(@PathVariable("email") String email) {
+  public boolean exists(@PathVariable String email) {
     if (!Patterns.EMAIL.matches(email)) return false;
 
     return accountJPA.existsByEmail(email);
@@ -121,8 +121,8 @@ public class AccountController {
     return ResponseEntity.of(accountJPA.findById(accountId));
   }
 
-  @GetMapping("/info/{id}")
-  public ResponseEntity<PublicAccount> show(@PathVariable("id") Long accountId) {
+  @GetMapping("/info/{accountId}")
+  public ResponseEntity<PublicAccount> show(@PathVariable Long accountId) {
     return ResponseEntity.of(accountJPA.findPublicById(accountId));
   }
 

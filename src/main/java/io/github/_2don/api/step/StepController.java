@@ -3,8 +3,8 @@ package io.github._2don.api.step;
 
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.project.ProjectJPA;
-import io.github._2don.api.projectmember.ProjectMembersJPA;
-import io.github._2don.api.projectmember.ProjectMembersPermissions;
+import io.github._2don.api.projectmember.ProjectMemberJPA;
+import io.github._2don.api.projectmember.ProjectMemberPermissions;
 import io.github._2don.api.task.TaskJPA;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -27,17 +27,17 @@ public class StepController {
   @Autowired
   private TaskJPA taskJPA;
   @Autowired
-  private ProjectMembersJPA projectMembersJPA;
+  private ProjectMemberJPA projectMemberJPA;
   @Autowired
   private StepJPA stepJPA;
 
   @GetMapping
   public List<Step> index(@AuthenticationPrincipal Long accountId,
-                          @PathVariable("projectId") Long projectId,
-                          @PathVariable("taskId") Long taskId) {
+                          @PathVariable Long projectId,
+                          @PathVariable Long taskId) {
 
     // account is member of project
-    if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
+    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
@@ -53,15 +53,15 @@ public class StepController {
   @ResponseStatus(HttpStatus.CREATED)
   public Step store(@AuthenticationPrincipal Long accountId,
                     @Validated @RequestBody Step step,
-                    @PathVariable("projectId") Long projectId,
-                    @PathVariable("taskId") Long taskId) {
+                    @PathVariable Long projectId,
+                    @PathVariable Long taskId) {
 
     // account is member of project and has permission
-    var projectMeta = projectMembersJPA
+    var projectMeta = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElse(null);
     if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
@@ -82,12 +82,12 @@ public class StepController {
 
   @GetMapping("/{stepId}")
   public Step show(@AuthenticationPrincipal Long accountId,
-                   @PathVariable("stepId") Long stepId,
-                   @PathVariable("projectId") Long projectId,
-                   @PathVariable("taskId") Long taskId) {
+                   @PathVariable Long stepId,
+                   @PathVariable Long projectId,
+                   @PathVariable Long taskId) {
 
     // account is member of project
-    if (!projectMembersJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
+    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
@@ -104,17 +104,17 @@ public class StepController {
 
   @PatchMapping("/{stepId}")
   public Step edit(@AuthenticationPrincipal Long accountId,
-                   @PathVariable("stepId") Long stepId,
-                   @PathVariable("projectId") Long projectId,
-                   @PathVariable("taskId") Long taskId,
+                   @PathVariable Long stepId,
+                   @PathVariable Long projectId,
+                   @PathVariable Long taskId,
                    @RequestBody Step step) {
 
     // account is member of project and has permission
-    var projectMeta = projectMembersJPA
+    var projectMeta = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElse(null);
     if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
@@ -160,16 +160,16 @@ public class StepController {
   @DeleteMapping("/{stepId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
-                      @PathVariable("stepId") Long stepId,
-                      @PathVariable("projectId") Long projectId,
-                      @PathVariable("taskId") Long taskId) {
+                      @PathVariable Long stepId,
+                      @PathVariable Long projectId,
+                      @PathVariable Long taskId) {
 
     // account is member of project and has permission
-    var projectMeta = projectMembersJPA
+    var projectMeta = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElse(null);
     if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MODIFY) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 

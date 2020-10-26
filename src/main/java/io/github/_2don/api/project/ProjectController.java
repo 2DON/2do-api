@@ -1,9 +1,9 @@
 package io.github._2don.api.project;
 
-import io.github._2don.api.projectmember.ProjectMembers;
-import io.github._2don.api.projectmember.ProjectMembersPermissions;
 import io.github._2don.api.account.AccountJPA;
-import io.github._2don.api.projectmember.ProjectMembersJPA;
+import io.github._2don.api.projectmember.ProjectMember;
+import io.github._2don.api.projectmember.ProjectMemberJPA;
+import io.github._2don.api.projectmember.ProjectMemberPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,16 +24,16 @@ public class ProjectController {
   @Autowired
   private AccountJPA accountJPA;
   @Autowired
-  private ProjectMembersJPA projectMembersJPA;
+  private ProjectMemberJPA projectMemberJPA;
 
   @GetMapping
   public List<Project> index(@AuthenticationPrincipal Long accountId,
                              @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
 
-    return projectMembersJPA
+    return projectMemberJPA
       .findAllByAccountId(accountId)
       .stream()
-      .map(ProjectMembers::getProject)
+      .map(ProjectMember::getProject)
       .filter(project -> project.getArchived() == archived)
       .sorted(Comparator.comparingInt(Project::getOrdinal))
       .collect(Collectors.toList());
@@ -48,7 +48,7 @@ public class ProjectController {
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
 
     if (!account.getPremium()
-      && projectMembersJPA.existsByAccountId(accountId)) {
+      && projectMemberJPA.existsByAccountId(accountId)) {
       // non-premium accounts can have only one project
       throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
     }
@@ -58,21 +58,19 @@ public class ProjectController {
 
     project = projectJPA.save(project);
 
-    // add the owner as a member
-    projectMembersJPA.save(new ProjectMembers(
-      account,
-      project,
-      null,
-      ProjectMembersPermissions.ALL));
+    projectMemberJPA.save(new ProjectMember()
+      .setAccount(account)
+      .setProject(project)
+      .setPermissions(ProjectMemberPermissions.OWNER));
 
     return project;
   }
 
   @GetMapping("/{projectId}")
   public Project show(@AuthenticationPrincipal Long accountId,
-                      @PathVariable("id") Long projectId) {
+                      @PathVariable Long projectId) {
 
-    var projectMeta = projectMembersJPA
+    var projectMeta = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
@@ -81,14 +79,14 @@ public class ProjectController {
 
   @PatchMapping("/{projectId}")
   public Project edit(@AuthenticationPrincipal Long accountId,
-                      @PathVariable("id") Long projectId,
+                      @PathVariable Long projectId,
                       @RequestBody Project project) {
 
-    var projectMeta = projectMembersJPA
+    var projectMeta = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElse(null);
     if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -136,13 +134,13 @@ public class ProjectController {
   @DeleteMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
-                      @PathVariable("projectId") Long projectId) {
+                      @PathVariable Long projectId) {
 
-    var projectMeta = projectMembersJPA
+    var projectMeta = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElse(null);
     if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMembersPermissions.MANAGE) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }

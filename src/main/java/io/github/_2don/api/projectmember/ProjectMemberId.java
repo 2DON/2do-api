@@ -13,7 +13,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-public class ProjectMembersId implements Serializable {
+public class ProjectMemberId implements Serializable {
 
   private Account account;
   private Project project;

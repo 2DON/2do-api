@@ -1,8 +1,8 @@
 package io.github._2don.api.team;
 
-import io.github._2don.api.teammembers.TeamMembers;
+import io.github._2don.api.teammember.TeamMember;
 import io.github._2don.api.account.AccountJPA;
-import io.github._2don.api.teammembers.TeamMembersJPA;
+import io.github._2don.api.teammember.TeamMembersJPA;
 import io.github._2don.api.utils.ImageEncoder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,7 +33,7 @@ public class TeamController {
     return teamMembersJPA
       .findAllByAccountId(accountId)
       .stream()
-      .map(TeamMembers::getTeam)
+      .map(TeamMember::getTeam)
       .collect(Collectors.toList());
   }
 
@@ -55,7 +55,7 @@ public class TeamController {
 
   @GetMapping("/{teamId}")
   public Team show(@AuthenticationPrincipal Long accountId,
-                   @PathVariable("teamId") Long teamId) {
+                   @PathVariable Long teamId) {
     if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -66,7 +66,7 @@ public class TeamController {
 
   @PatchMapping("/{teamId}")
   public Team edit(@AuthenticationPrincipal Long accountId,
-                   @PathVariable("teamId") Long teamId,
+                   @PathVariable Long teamId,
                    @RequestPart(name = "name", required = false) String name,
                    @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
                    @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
@@ -103,7 +103,7 @@ public class TeamController {
   @DeleteMapping("/{teamId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
-                      @PathVariable("teamId") Long teamId) {
+                      @PathVariable Long teamId) {
     var teamMeta = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     if (!teamMeta.getOperator()) {

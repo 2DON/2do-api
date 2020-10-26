@@ -1,6 +1,6 @@
 package io.github._2don.api.projectmember;
 
-public enum ProjectMembersPermissions {
+public enum ProjectMemberPermissions {
   /**
    * Can see the project, tasks and steps
    */
@@ -8,21 +8,17 @@ public enum ProjectMembersPermissions {
   /**
    * Can add, modify, complete and remove tasks and steps
    */
-  MODIFY,
+  MAN_TASKS,
   /**
-   * Can invite users to view the project
+   * Can invite, remove, promote and demote participants, lower permissions
    */
-  INVITE,
-  /**
-   * Can remove and promote participants, and demote participants with lower permissions
-   */
-  MODERATE,
+  MAN_MEMBERS,
   /**
    * Can manage the project, allowing everything except deleting the project
    */
-  MANAGE,
+  MAN_PROJECT,
   /**
    * Allowed to do everything, including deleting and archiving the project
    */
-  ALL;
+  OWNER
 }

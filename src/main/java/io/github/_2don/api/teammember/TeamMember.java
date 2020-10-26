@@ -1,11 +1,9 @@
-package io.github._2don.api.projectmember;
+package io.github._2don.api.teammember;
 
 import com.fasterxml.jackson.annotation.*;
 import io.github._2don.api.account.Account;
 import io.github._2don.api.team.Team;
-import io.github._2don.api.project.Project;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,9 +16,9 @@ import java.sql.Timestamp;
 @Entity
 @NoArgsConstructor
 @Accessors(chain = true)
-@IdClass(ProjectMembersId.class)
+@IdClass(TeamMembersId.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ProjectMembers {
+public class TeamMember {
 
   @Id
   @ManyToOne
@@ -36,19 +34,11 @@ public class ProjectMembers {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JoinColumn(referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  private Project project;
-
-  @ManyToOne
-  @JoinColumn(referencedColumnName = "id")
-  @JsonIdentityReference(alwaysAsId = true)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Team team;
 
   @NotNull
   @Column(nullable = false)
-  @Enumerated(EnumType.ORDINAL)
-  private ProjectMembersPermissions permissions;
+  private Boolean operator = false;
 
   @CreationTimestamp
   @Column(nullable = false)
@@ -60,13 +50,9 @@ public class ProjectMembers {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Timestamp updatedAt;
 
-  public ProjectMembers(Account account,
-                        Project project,
-                        Team team,
-                        ProjectMembersPermissions permissions) {
+  public TeamMember(Account account, Team team) {
     this.account = account;
-    this.project = project;
     this.team = team;
-    this.permissions = permissions;
   }
+
 }
