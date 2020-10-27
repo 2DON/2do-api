@@ -1,21 +1,29 @@
 package io.github._2don.api.account;
 
-import io.github._2don.api.jwt.JWTConfig;
-import io.github._2don.api.utils.ImageEncoder;
-import io.github._2don.api.utils.Patterns;
+import java.io.IOException;
+import java.sql.Date;
+import java.time.LocalDate;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.sql.Date;
-import java.time.LocalDate;
+import io.github._2don.api.jwt.JWTConfig;
+import io.github._2don.api.utils.ImageEncoder;
+import io.github._2don.api.utils.Patterns;
 
 @RestController
 @RequestMapping("/accounts")
@@ -30,7 +38,8 @@ public class AccountController {
 
   @GetMapping("/exists/{email}")
   public boolean exists(@PathVariable String email) {
-    if (!Patterns.EMAIL.matches(email)) return false;
+    if (!Patterns.EMAIL.matches(email))
+      return false;
 
     return accountJPA.existsByEmail(email);
   }
@@ -39,11 +48,9 @@ public class AccountController {
   @ResponseStatus(HttpStatus.CREATED)
   public void signUp(@RequestBody Account account) {
 
-    if (account.getEmail() == null
-      || !Patterns.EMAIL.matches(account.getEmail())
-      || account.getEmail().length() > 45
-      || account.getPassword() == null
-      || account.getPassword().length() < 8) {
+    if (account.getEmail() == null || !Patterns.EMAIL.matches(account.getEmail())
+        || account.getEmail().length() > 45 || account.getPassword() == null
+        || account.getPassword().length() < 8) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
     }
 
@@ -51,10 +58,8 @@ public class AccountController {
       throw new ResponseStatusException(HttpStatus.CONFLICT);
     }
 
-    account
-      .setPassword(bcrypt.encode(account.getPassword()))
-      .setName(account.getEmail())
-      .setOptions(null);
+    account.setPassword(bcrypt.encode(account.getPassword())).setName(account.getEmail())
+        .setOptions(null);
 
     accountJPA.save(account);
   }
@@ -62,15 +67,15 @@ public class AccountController {
   @PatchMapping("/edit")
   @ResponseStatus(HttpStatus.OK)
   public Account edit(@AuthenticationPrincipal Long accountId,
-                      @RequestPart(name = "email", required = false) String email,
-                      @RequestPart(name = "password", required = false) String password,
-                      @RequestPart(name = "name", required = false) String name,
-                      @RequestPart(name = "options", required = false) String options,
-                      @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
-                      @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
+      @RequestPart(name = "email", required = false) String email,
+      @RequestPart(name = "password", required = false) String password,
+      @RequestPart(name = "name", required = false) String name,
+      @RequestPart(name = "options", required = false) String options,
+      @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
+      @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
 
     var account = accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
 
     if (email != null) {
       if (!Patterns.EMAIL.matches(email) || email.length() > 45) {
@@ -128,11 +133,11 @@ public class AccountController {
 
   @DeleteMapping("/delete")
   @ResponseStatus(HttpStatus.OK)
-  public void destroy(@AuthenticationPrincipal Long accountId,
-                      @RequestBody String password,
-                      HttpServletResponse response) {
+  public void destroy(@AuthenticationPrincipal Long accountId, @RequestBody String password,
+      HttpServletResponse response) {
 
-    var account = accountJPA.findById(accountId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findById(accountId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (!bcrypt.matches(password, account.getPassword())) {
       // wrong password
@@ -142,5 +147,19 @@ public class AccountController {
     account.setDeleteRequest(Date.valueOf(LocalDate.now().plusMonths(1)));
     accountJPA.save(account);
     response.addHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
+  }
+
+  @PostMapping("/premium")
+  @ResponseStatus(HttpStatus.OK)
+  public void premium(@AuthenticationPrincipal Long accountId) {
+    Account account = accountJPA.getOne(accountId);
+
+    if (account.getPremium()) {
+      account.setPremium(false);
+    } else {
+      account.setPremium(true);
+    }
+
+    accountJPA.save(account);
   }
 }
