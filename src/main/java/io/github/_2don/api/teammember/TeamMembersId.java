@@ -1,13 +1,10 @@
 package io.github._2don.api.teammember;
 
-import io.github._2don.api.account.Account;
-import io.github._2don.api.team.Team;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
@@ -15,7 +12,7 @@ import java.io.Serializable;
 @Accessors(chain = true)
 public class TeamMembersId implements Serializable {
 
-  private Account account;
-  private Team team;
+  private Long account;
+  private Long team;
 
 }
