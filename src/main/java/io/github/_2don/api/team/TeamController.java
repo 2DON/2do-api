@@ -31,7 +31,10 @@ public class TeamController {
   @GetMapping
   public List<Team> index(@AuthenticationPrincipal Long accountId) {
 
-    return teamMembersJPA.findAllByAccountId(accountId).stream().map(TeamMember::getTeam)
+    return teamMembersJPA
+      .findAllByAccountId(accountId)
+      .stream()
+      .map(TeamMember::getTeam)
       .collect(Collectors.toList());
   }
 

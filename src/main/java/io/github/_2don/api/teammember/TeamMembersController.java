@@ -1,24 +1,18 @@
 package io.github._2don.api.teammember;
 
-import java.util.List;
-import javax.validation.Valid;
+import io.github._2don.api.account.AccountJPA;
+import io.github._2don.api.team.TeamJPA;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.account.AccountJPA;
-import io.github._2don.api.team.TeamJPA;
+
+import javax.validation.Valid;
+import java.util.List;
 
 @RestController
-@RequestMapping("/teams/members")
+@RequestMapping("/teams/{teamId}/members")
 public class TeamMembersController {
 
   @Autowired
@@ -29,47 +23,49 @@ public class TeamMembersController {
   private TeamJPA teamJPA;
 
   @GetMapping
-  public List<TeamMember> index(@AuthenticationPrincipal Long accountId) {
-
-    return teamMembersJPA.findAllByAccountId(accountId);
-  }
-
-  @GetMapping("/{teamId}")
   public List<TeamMember> index(@AuthenticationPrincipal Long accountId,
-      @PathVariable Long teamId) {
+                                @PathVariable Long teamId) {
+    if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
 
     return teamMembersJPA.findAllByTeamId(teamId);
   }
 
+  // TODO(jonatanbirck): follow the patterns in use
+
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public TeamMember store(@AuthenticationPrincipal Long accountId,
-      @Valid @RequestBody TeamMember teamMember) {
+                          @PathVariable Long teamId,
+                          @Valid @RequestBody TeamMember teamMember) {
 
-    var account = accountJPA.findById(accountId).orElse(null);
+    // TODO(jonatanbirck): don't trust the received team member
+    // TODO(jonatanbirck): check if account is in the team already
+    // TODO(jonatanbirck): check if account has permission to add other account
+    // TODO(jonatanbirck): receive the account to be added
 
-    if (account == null) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    teamMember.setOperator(true);
+    // teamMember.setCreatedBy(accountJPA.getOne(accountId))
+    // teamMember.setUpdatedBy(accountJPA.getOne(accountId))
 
     return teamMembersJPA.save(teamMember);
   }
 
+  // TODO(jonatanbirck): 'PATCH /'
+
   @DeleteMapping("/{accountId}/{teamId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountLoggedId, @PathVariable Long accountId,
-      Long teamId) {
+                      Long teamId) {
 
     var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
     if (!teamMember.getOperator()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    // TODO just delete?
+    // TODO(jonatanbirck): just delete?
     teamMembersJPA.delete(teamMember);
   }
 
@@ -78,9 +74,11 @@ public class TeamMembersController {
   public void destroy(@AuthenticationPrincipal Long accountId, Long teamId) {
 
     var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-    // TODO just delete?
+    // TODO(jonatanbirck): check if account is the only operator in the team, and if is return FORBIDDEN
+
+    // TODO(jonatanbirck): just delete?
     teamMembersJPA.delete(teamMember);
   }
 }

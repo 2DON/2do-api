@@ -46,10 +46,24 @@ public class TeamMember {
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Timestamp createdAt;
 
+  @ManyToOne
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JsonIdentityReference(alwaysAsId = true)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  private Account createdBy;
+
   @UpdateTimestamp
   @Column(nullable = false)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private Timestamp updatedAt;
+
+  @ManyToOne
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JsonIdentityReference(alwaysAsId = true)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  private Account updatedBy;
 
   public TeamMember(Account account, Team team) {
     this.account = account;
