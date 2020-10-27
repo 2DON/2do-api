@@ -37,13 +37,11 @@ public interface ProjectMemberDTO {
 
   Timestamp getCreatedAt();
 
-  @JsonIdentityReference(alwaysAsId = true)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   Account getCreatedBy();
 
   Timestamp getUpdatedAt();
 
-  @JsonIdentityReference(alwaysAsId = true)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   Account getUpdatedBy();
 

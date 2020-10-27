@@ -1,29 +1,21 @@
 package io.github._2don.api.team;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
-import javax.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.teammember.TeamMember;
 import io.github._2don.api.teammember.TeamMembersJPA;
 import io.github._2don.api.utils.ImageEncoder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
+import javax.validation.Valid;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/teams")
@@ -40,7 +32,7 @@ public class TeamController {
   public List<Team> index(@AuthenticationPrincipal Long accountId) {
 
     return teamMembersJPA.findAllByAccountId(accountId).stream().map(TeamMember::getTeam)
-        .collect(Collectors.toList());
+      .collect(Collectors.toList());
   }
 
   @PostMapping
@@ -71,22 +63,22 @@ public class TeamController {
     }
 
     return teamJPA.findById(teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   }
 
   @PatchMapping("/{teamId}")
   public Team edit(@AuthenticationPrincipal Long accountId, @PathVariable Long teamId,
-      @RequestPart(name = "name", required = false) String name,
-      @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
-      @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
+                   @RequestPart(name = "name", required = false) String name,
+                   @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
+                   @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws IOException {
     var teamMeta = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     if (!teamMeta.getOperator()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     var team = teamJPA.findById(teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (name != null) {
       if (name.length() < 1 || name.length() > 45) {
@@ -114,7 +106,7 @@ public class TeamController {
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId, @PathVariable Long teamId) {
     var teamMeta = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     if (!teamMeta.getOperator()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }

@@ -1,6 +1,5 @@
 package io.github._2don.api.projectmember;
 
-import com.fasterxml.jackson.annotation.*;
 import io.github._2don.api.account.Account;
 import io.github._2don.api.project.Project;
 import io.github._2don.api.team.Team;
