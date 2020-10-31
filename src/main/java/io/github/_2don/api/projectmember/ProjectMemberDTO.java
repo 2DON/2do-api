@@ -1,10 +1,11 @@
 package io.github._2don.api.projectmember;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIdentityReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.github._2don.api.account.Account;
+import io.github._2don.api.account.AccountToPublicAccountConverter;
 import io.github._2don.api.team.Team;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +15,6 @@ import java.sql.Timestamp;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public interface ProjectMemberDTO {
-
   static ProjectMemberDTO from(ProjectMember projectMember) {
     return new ProjectMemberDTO.Impl(
       projectMember.getAccount(),
@@ -27,6 +27,7 @@ public interface ProjectMemberDTO {
     );
   }
 
+  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   Account getAccount();
 
@@ -37,11 +38,13 @@ public interface ProjectMemberDTO {
 
   Timestamp getCreatedAt();
 
+  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   Account getCreatedBy();
 
   Timestamp getUpdatedAt();
 
+  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   Account getUpdatedBy();
 
@@ -57,5 +60,4 @@ public interface ProjectMemberDTO {
     private Timestamp updatedAt;
     private Account updatedBy;
   }
-
 }

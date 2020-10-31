@@ -7,7 +7,6 @@ import io.github._2don.api.projectmember.ProjectMemberPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -39,10 +38,11 @@ public class ProjectController {
       .collect(Collectors.toList());
   }
 
+  // fix
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public Project store(@AuthenticationPrincipal Long accountId,
-                       @Validated @RequestBody Project project) {
+                       @RequestBody Project project) {
 
     var account = accountJPA.findById(accountId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));

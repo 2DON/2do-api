@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -55,6 +56,11 @@ public class Account {
   @Column(nullable = false)
   @JsonProperty(access = Access.READ_ONLY)
   private Timestamp createdAt;
+
+  @UpdateTimestamp
+  @Column(nullable = false)
+  @JsonProperty(access = Access.READ_ONLY)
+  private Timestamp updatedAt;
 
   public Account(String email, String password) {
     this.email = email;

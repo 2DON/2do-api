@@ -1,7 +1,9 @@
 package io.github._2don.api.teammember;
 
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.github._2don.api.account.Account;
+import io.github._2don.api.account.AccountToPublicAccountConverter;
 import io.github._2don.api.team.Team;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,6 +28,7 @@ public class TeamMember {
   @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JoinColumn(referencedColumnName = "id", nullable = false)
+  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account account;
 
@@ -47,8 +50,9 @@ public class TeamMember {
   private Timestamp createdAt;
 
   @ManyToOne
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
@@ -59,8 +63,9 @@ public class TeamMember {
   private Timestamp updatedAt;
 
   @ManyToOne
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
