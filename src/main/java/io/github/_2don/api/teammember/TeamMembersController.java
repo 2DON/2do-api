@@ -1,5 +1,6 @@
 package io.github._2don.api.teammember;
 
+import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.team.TeamJPA;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,13 +41,26 @@ public class TeamMembersController {
                           @PathVariable Long teamId,
                           @Valid @RequestBody TeamMember teamMember) {
 
+    Account account = accountJPA.findById(accountId).orElse(null);
+    if (account == null || !account.getPremium()){
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    var teamMembers = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+    if(!teamMembers.getOperator()){
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+
     // TODO(jonatanbirck): don't trust the received team member
     // TODO(jonatanbirck): check if account is in the team already
     // TODO(jonatanbirck): check if account has permission to add other account
     // TODO(jonatanbirck): receive the account to be added
 
-    // teamMember.setCreatedBy(accountJPA.getOne(accountId))
-    // teamMember.setUpdatedBy(accountJPA.getOne(accountId))
+     teamMember.setCreatedBy(account);
+     teamMember.setUpdatedBy(account);
 
     return teamMembersJPA.save(teamMember);
   }
