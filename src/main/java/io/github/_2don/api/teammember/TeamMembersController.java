@@ -22,6 +22,8 @@ public class TeamMembersController {
   private TeamMembersJPA teamMembersJPA;
   @Autowired
   private TeamJPA teamJPA;
+  @Autowired
+  private TeamMemberService teamMemberService;
 
   @GetMapping
   public List<TeamMember> index(@AuthenticationPrincipal Long accountId,
@@ -67,25 +69,34 @@ public class TeamMembersController {
 
   // TODO(jonatanbirck): 'PATCH /'
 
-  @DeleteMapping("/{accountId}/{teamId}")
+  @PatchMapping("/{memberId}")
+  public TeamMember edit(@AuthenticationPrincipal Long accountId,
+                         @PathVariable Long teamId,
+                         @PathVariable Long memberId,
+                         @RequestPart Boolean operator) {
+  return teamMemberService.edit(accountId,memberId,teamId,operator);
+  }
+
+
+  @DeleteMapping("/{accountId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountLoggedId, @PathVariable Long accountId,
                       Long teamId) {
 
-    var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    var loggedMeta = teamMemberService.getMeta(accountLoggedId, teamId);
+    var accountMeta = teamMemberService.getMeta(accountId, teamId);
 
-    if (!teamMember.getOperator()) {
+    if(!loggedMeta.getOperator() || accountLoggedId.equals(accountId)){
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     // TODO(jonatanbirck): just delete?
-    teamMembersJPA.delete(teamMember);
+    teamMembersJPA.delete(accountMeta);
   }
 
-  @DeleteMapping("/{teamId}")
+  @DeleteMapping
   @ResponseStatus(HttpStatus.OK)
-  public void destroy(@AuthenticationPrincipal Long accountId, Long teamId) {
+  public void destroy(@AuthenticationPrincipal Long accountId, @PathVariable Long teamId) {
 
     var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
