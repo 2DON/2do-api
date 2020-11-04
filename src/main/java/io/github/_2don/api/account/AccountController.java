@@ -52,12 +52,12 @@ public class AccountController {
 
   @GetMapping("/info")
   public ResponseEntity<Account> info(@AuthenticationPrincipal Long accountId) {
-    return ResponseEntity.ok(this.accountService.info(accountId));
+    return ResponseEntity.ok(this.accountService.getAccount(accountId));
   }
 
   @GetMapping("/info/{accountId}")
   public ResponseEntity<PublicAccount> show(@PathVariable Long accountId) {
-    return ResponseEntity.ok(this.accountService.infoPublic(accountId));
+    return ResponseEntity.ok(this.accountService.getPublicAccount(accountId));
   }
 
   @DeleteMapping("/delete")

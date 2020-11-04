@@ -138,12 +138,12 @@ public class AccountService {
    * @param isPublic  boolean
    * @return JSONObject
    */
-  public Account info(Long accountId) {
+  public Account getAccount(Long accountId) {
     return accountJPA.findById(accountId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
   }
 
-  public PublicAccount infoPublic(Long accountId) {
+  public PublicAccount getPublicAccount(Long accountId) {
     Account account = accountJPA.findById(accountId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
