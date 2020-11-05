@@ -7,10 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.project.Project;
-import io.github._2don.api.team.TeamJPA;
+import io.github._2don.api.team.TeamService;
 import io.github._2don.api.teammember.TeamMemberService;
 import lombok.NonNull;
 
@@ -22,12 +21,9 @@ public class ProjectMemberService {
   private static final Long NON_PREMIUM_PARTICIPATION_LIMIT = 3L;
 
   @Autowired
-  private AccountJPA accountJPA;
-  @Autowired
   private ProjectMemberJPA projectMemberJPA;
   @Autowired
-  private TeamJPA teamJPA;
-
+  private TeamService teamService;
   @Autowired
   private AccountService accountService;
   @Autowired
@@ -46,9 +42,8 @@ public class ProjectMemberService {
   }
 
   public void assertProjectLimit(@NonNull Long accountId) {
-    var account = accountJPA.findById(accountId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
+    var account = accountService.getAccount(accountId);
     assertProjectLimit(account);
   }
 
@@ -60,8 +55,7 @@ public class ProjectMemberService {
   }
 
   public void assertParticipationLimit(@NonNull Long accountId) {
-    var account = accountJPA.findById(accountId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountService.getAccount(accountId);
 
     if (!account.getPremium()
         && projectMemberJPA.countByAccountId(accountId) >= NON_PREMIUM_PARTICIPATION_LIMIT) {
@@ -117,14 +111,14 @@ public class ProjectMemberService {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    var projectMember = new ProjectMember().setAccount(accountJPA.getOne(accountId))
+    var projectMember = new ProjectMember().setAccount(accountService.getAccount(accountId))
         .setProject(loggedMeta.getProject()).setPermissions(permissions)
         .setCreatedBy(loggedMeta.getAccount()).setUpdatedBy(loggedMeta.getAccount());
 
     if (teamId != null) {
       teamMemberService.assertIsMember(accountId, teamId);
 
-      projectMember.setTeam(teamJPA.getOne(teamId));
+      projectMember.setTeam(teamService.getTeam(teamId));
     }
 
     return ProjectMemberDTO.from(projectMemberJPA.save(projectMember));
@@ -151,7 +145,7 @@ public class ProjectMemberService {
     if (teamId != null) {
       teamMemberService.assertIsMember(accountId, teamId);
 
-      accountMeta.setTeam(teamJPA.getOne(teamId));
+      accountMeta.setTeam(teamService.getTeam(teamId));
     }
 
     accountMeta.setUpdatedBy(loggedMeta.getAccount());

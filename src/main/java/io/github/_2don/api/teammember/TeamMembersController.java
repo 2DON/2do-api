@@ -1,109 +1,58 @@
 package io.github._2don.api.teammember;
 
-import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountJPA;
-import io.github._2don.api.team.TeamJPA;
+import java.util.List;
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-
-import javax.validation.Valid;
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/teams/{teamId}/members")
 public class TeamMembersController {
 
   @Autowired
-  private AccountJPA accountJPA;
-  @Autowired
-  private TeamMembersJPA teamMembersJPA;
-  @Autowired
-  private TeamJPA teamJPA;
-  @Autowired
   private TeamMemberService teamMemberService;
 
   @GetMapping
   public List<TeamMember> index(@AuthenticationPrincipal Long accountId,
-                                @PathVariable Long teamId) {
-    if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    return teamMembersJPA.findAllByTeamId(teamId);
+      @PathVariable Long teamId) {
+    return teamMemberService.getTeamMembers(accountId, teamId);
   }
-
-  // TODO(jonatanbirck): follow the patterns in use
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public TeamMember store(@AuthenticationPrincipal Long accountId,
-                          @PathVariable Long teamId,
-                          @Valid @RequestBody TeamMember teamMember) {
-
-    Account account = accountJPA.findById(accountId).orElse(null);
-    if (account == null || !account.getPremium()){
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    var teamMembers = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-
-    if(!teamMembers.getOperator()){
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-
-    // TODO(jonatanbirck): don't trust the received team member
-    // TODO(jonatanbirck): check if account is in the team already
-    // TODO(jonatanbirck): check if account has permission to add other account
-    // TODO(jonatanbirck): receive the account to be added
-
-     teamMember.setCreatedBy(account);
-     teamMember.setUpdatedBy(account);
-
-    return teamMembersJPA.save(teamMember);
+  public TeamMember store(@AuthenticationPrincipal Long accountId, @PathVariable Long teamId,
+      @Valid @RequestBody TeamMember teamMember) {
+    return teamMemberService.add(accountId, teamId, teamMember);
   }
 
-  // TODO(jonatanbirck): 'PATCH /'
-
   @PatchMapping("/{memberId}")
-  public TeamMember edit(@AuthenticationPrincipal Long accountId,
-                         @PathVariable Long teamId,
-                         @PathVariable Long memberId,
-                         @RequestPart Boolean operator) {
-  return teamMemberService.edit(accountId,memberId,teamId,operator);
+  public TeamMember edit(@AuthenticationPrincipal Long accountId, @PathVariable Long teamId,
+      @PathVariable Long memberId, @RequestPart Boolean operator) {
+    return teamMemberService.update(accountId, memberId, teamId, operator);
   }
 
 
   @DeleteMapping("/{accountId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountLoggedId, @PathVariable Long accountId,
-                      Long teamId) {
-
-    var loggedMeta = teamMemberService.getMeta(accountLoggedId, teamId);
-    var accountMeta = teamMemberService.getMeta(accountId, teamId);
-
-    if(!loggedMeta.getOperator() || accountLoggedId.equals(accountId)){
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    // TODO(jonatanbirck): just delete?
-    teamMembersJPA.delete(accountMeta);
+      Long teamId) {
+    teamMemberService.delete(accountLoggedId, accountId, teamId);
   }
 
   @DeleteMapping
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId, @PathVariable Long teamId) {
-
-    var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-
-    // TODO(jonatanbirck): check if account is the only operator in the team, and if is return FORBIDDEN
-
-    // TODO(jonatanbirck): just delete?
-    teamMembersJPA.delete(teamMember);
+    teamMemberService.delete(accountId, teamId);
   }
 }

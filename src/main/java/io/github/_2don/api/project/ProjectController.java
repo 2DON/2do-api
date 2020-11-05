@@ -15,20 +15,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountService;
-import io.github._2don.api.projectmember.ProjectMemberService;
 
 @RestController
 @RequestMapping("/projects")
 public class ProjectController {
 
   @Autowired
-  private AccountService accountService;
-  @Autowired
   private ProjectService projectService;
-  @Autowired
-  private ProjectMemberService projectMemberService;
 
   @GetMapping
   public List<Project> index(@AuthenticationPrincipal Long accountId,
@@ -41,13 +34,7 @@ public class ProjectController {
   @ResponseStatus(HttpStatus.CREATED)
   public Project store(@AuthenticationPrincipal Long accountId,
       @Valid @RequestBody Project project) {
-
-    Account account = accountService.getAccount(accountId);
-
-    project.setCreatedBy(account);
-    project.setUpdatedBy(account);
-
-    return projectService.add(project);
+    return projectService.add(accountId, project);
   }
 
   @GetMapping("/{projectId}")

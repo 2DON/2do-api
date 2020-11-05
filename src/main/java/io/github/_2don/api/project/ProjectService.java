@@ -24,12 +24,17 @@ public class ProjectService {
   private ProjectMemberService projectMemberService;
 
   // fix
-  public Project add(Project project) {
+  public Project add(Long accountId, Project project) {
 
-    if (!project.getCreatedBy().getPremium() && projectMemberService.exist(project)) {
+    Account account = accountService.getAccount(accountId);
+
+    if (!account.getPremium() && projectMemberService.exist(project)) {
       // non-premium accounts can have only one project
       throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
     }
+
+    project.setCreatedBy(account);
+    project.setUpdatedBy(account);
 
     project = projectJPA.save(project);
 

@@ -29,49 +29,51 @@ public class AccountController {
 
   @GetMapping("/exists/{email}")
   public boolean exists(@PathVariable String email) {
-    return this.accountService.exist(email);
+    return accountService.exist(email);
   }
 
   @PostMapping("/sign-up")
   @ResponseStatus(HttpStatus.CREATED)
   public Account signUp(@RequestBody Account account) {
-    return this.accountService.add(account);
+    return accountService.add(account);
   }
 
   @PatchMapping("/edit")
   @ResponseStatus(HttpStatus.OK)
   public Account edit(@AuthenticationPrincipal Long accountId,
       @RequestPart(name = "email", required = false) String email,
+      @RequestPart(name = "oldPassword", required = false) String oldPassword,
       @RequestPart(name = "password", required = false) String password,
       @RequestPart(name = "name", required = false) String name,
       @RequestPart(name = "options", required = false) String options,
       @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
       @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws Exception {
-    return this.accountService.update(accountId, email, password, name, options, avatar);
+    return accountService.update(accountId, email, oldPassword, password, name, options, avatar);
   }
 
   @GetMapping("/info")
   public ResponseEntity<Account> info(@AuthenticationPrincipal Long accountId) {
-    return ResponseEntity.ok(this.accountService.getAccount(accountId));
+    return ResponseEntity.ok(accountService.getAccount(accountId));
   }
 
   @GetMapping("/info/{accountId}")
   public ResponseEntity<PublicAccount> show(@PathVariable Long accountId) {
-    return ResponseEntity.ok(this.accountService.getPublicAccount(accountId));
+    return ResponseEntity.ok(accountService.getPublicAccount(accountId));
   }
 
   @DeleteMapping("/delete")
   @ResponseStatus(HttpStatus.OK)
-  public void destroy(@AuthenticationPrincipal Long accountId, @RequestBody String password,
+  public void destroy(@AuthenticationPrincipal Long accountId,
+      @RequestPart(name = "password", required = true) String password,
       HttpServletResponse response) {
 
-    this.accountService.delete(accountId, password);
+    accountService.delete(accountId, password);
     response.addHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
   }
 
   @PostMapping("/premium")
   @ResponseStatus(HttpStatus.OK)
   public void premium(@AuthenticationPrincipal Long accountId) {
-    this.accountService.obtainPremium(accountId);
+    accountService.obtainPremium(accountId);
   }
 }
