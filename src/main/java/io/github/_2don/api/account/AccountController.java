@@ -42,13 +42,12 @@ public class AccountController {
   @ResponseStatus(HttpStatus.OK)
   public Account edit(@AuthenticationPrincipal Long accountId,
       @RequestPart(name = "email", required = false) String email,
-      @RequestPart(name = "oldPassword", required = false) String oldPassword,
       @RequestPart(name = "password", required = false) String password,
       @RequestPart(name = "name", required = false) String name,
       @RequestPart(name = "options", required = false) String options,
       @RequestPart(name = "removeAvatar", required = false) String removeAvatar,
       @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws Exception {
-    return accountService.update(accountId, email, oldPassword, password, name, options, avatar);
+    return accountService.update(accountId, email, password, name, options, avatar);
   }
 
   @GetMapping("/info")

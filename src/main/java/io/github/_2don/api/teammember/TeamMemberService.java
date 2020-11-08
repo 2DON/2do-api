@@ -36,17 +36,15 @@ public class TeamMemberService {
     teamMember.setUpdatedBy(account);
     teamMember.setTeam(team);
 
-    // TODO(jonatanbirck): don't trust the received team member
-    // TODO(jonatanbirck): check if account is in the team already
-    // TODO(jonatanbirck): check if account has permission to add other account
-    // TODO(jonatanbirck): receive the account to be added
-
     return teamMembersJPA.save(teamMember);
   }
 
-  public TeamMember add(Long accountId, Long teamId, TeamMember teamMember) {
+  public TeamMember add(Long accountId, Long teamId, Long memberId) {
 
     Account account = accountService.getAccount(accountId);
+    Account member = accountService.getAccount(memberId);
+
+    Team team = teamService.getTeam(teamId);
 
     if (!account.getPremium()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -59,14 +57,12 @@ public class TeamMemberService {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-
-    // TODO(jonatanbirck): don't trust the received team member
-    // TODO(jonatanbirck): check if account is in the team already
-    // TODO(jonatanbirck): check if account has permission to add other account
-    // TODO(jonatanbirck): receive the account to be added
-
+    TeamMember teamMember = new TeamMember();
     teamMember.setCreatedBy(account);
+    teamMember.setOperator(false);
+    teamMember.setAccount(member);
     teamMember.setUpdatedBy(account);
+    teamMember.setTeam(team);
 
     return teamMembersJPA.save(teamMember);
   }
@@ -107,7 +103,7 @@ public class TeamMemberService {
     if (!loggedMeta.getOperator()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
-    if (teamMembersJPA.countByTeamIdAndOperator(teamId, true) < 2) {
+    if (!operator && teamMembersJPA.countByTeamIdAndOperator(teamId, true) < 2) {
       throw new ResponseStatusException(HttpStatus.LOCKED);
     }
 
@@ -120,8 +116,14 @@ public class TeamMemberService {
     var loggedMeta = getTeamMember(accountLoggedId, teamId);
     var accountMeta = getTeamMember(accountId, teamId);
 
-    if (!loggedMeta.getOperator() || accountLoggedId.equals(accountId)) {
+    if (!loggedMeta.getOperator()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    Long countOpertors = teamMembersJPA.countByTeamIdAndOperator(teamId, true);
+
+    if (countOpertors <= 1) {
+      new ResponseStatusException(HttpStatus.FORBIDDEN);
     }
 
     // TODO(jonatanbirck): just delete?
@@ -132,11 +134,22 @@ public class TeamMemberService {
     var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-    // TODO(jonatanbirck): check if account is the only operator in the team, and if is return
-    // FORBIDDEN
+    Long countOpertors = teamMembersJPA.countByTeamIdAndOperator(teamId, true);
+
+    if (countOpertors <= 1) {
+      new ResponseStatusException(HttpStatus.FORBIDDEN);
+    }
 
     // TODO(jonatanbirck): just delete?
     teamMembersJPA.delete(teamMember);
+  }
+
+  public void delete(Long teamId) {
+    List<TeamMember> teamsMember = teamMembersJPA.findAllByTeamId(teamId);
+
+    for (TeamMember teamMember : teamsMember) {
+      teamMembersJPA.delete(teamMember);
+    }
   }
 
 }

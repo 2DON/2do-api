@@ -59,8 +59,8 @@ public class AccountService {
    * @param avatar    MultipartFile
    * @return Account
    */
-  public Account update(Long accountId, String email, String oldPassword, String password,
-      String name, String options, MultipartFile avatar) {
+  public Account update(Long accountId, String email, String password, String name, String options,
+      MultipartFile avatar) {
 
     Account account = accountJPA.findById(accountId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
@@ -80,11 +80,6 @@ public class AccountService {
     if (password != null) {
       if (password.length() < 8) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-      }
-
-      if (!bcrypt.matches(oldPassword, account.getPassword())) {
-        // wrong password
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
       }
 
       account.setPassword(bcrypt.encode(password));

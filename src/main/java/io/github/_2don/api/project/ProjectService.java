@@ -1,19 +1,18 @@
 package io.github._2don.api.project;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.projectmember.ProjectMember;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
 import io.github._2don.api.projectmember.ProjectMemberPermissions;
 import io.github._2don.api.projectmember.ProjectMemberService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -122,13 +121,11 @@ public class ProjectService {
     Account account = accountService.getAccount(accountId);
     Project project = projectJPA.getOne(projectId);
 
-    boolean hasProject = projectMemberService.hasProject(account, project);
-
-    if (!hasProject) {
+    if( project == null || project.getCreatedBy().getId() != account.getId() ){
       new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    return projectJPA.getOne(projectId);
+    return project;
   }
 
   public List<Project> getAllProjectByAccountId(Long accountId, boolean archived) {

@@ -41,8 +41,13 @@ public class TeamService {
 
   public Team getTeam(Long teamId) {
 
-    return teamJPA.findById(teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    Team team = teamJPA.getOne(teamId);
+
+    if (team == null) {
+      new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    return team;
   }
 
   public Team add(Long accountId, Team team) {
@@ -110,7 +115,9 @@ public class TeamService {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
+    teamMemberService.delete(teamId);
+
     // TODO just delete?
-    teamJPA.delete(teamJPA.getOne(teamId));
+    teamJPA.deleteById(teamId);
   }
 }
