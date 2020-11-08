@@ -1,3 +1,5 @@
+
+
 package io.github._2don.api.task;
 
 import com.fasterxml.jackson.annotation.*;
@@ -30,7 +32,6 @@ public class Task {
   private Long id;
 
   @ManyToOne
-  @JsonIgnore
   @JsonIdentityReference(alwaysAsId = true)
   @JoinColumn(referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -84,7 +85,8 @@ public class Task {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 
-  public Task(Project project, @NotNull @Size(min = 1, max = 80) String description, Account assignedTo) {
+  public Task(Project project, @NotNull @Size(min = 1, max = 80) String description,
+      Account assignedTo) {
     this.project = project;
     this.description = description;
     this.assignedTo = assignedTo;
