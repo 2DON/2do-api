@@ -5,6 +5,9 @@ spring:
     password: postgres
   jpa:
     show-sql: true
+  profiles:
+    active:
+      - local
 
 server:
   error:
@@ -12,3 +15,5 @@ server:
 
 auth:
   secret: ${random.value}
+
+

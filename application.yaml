@@ -21,3 +21,7 @@ auth:
     expiration: 2880000 # 8 hours
     expired_value: EXPIRED
 
+mail:
+  sendgrid:
+    api_key: <sendgrid_api_key>
+    identity: <sendgrid_identity_email>
