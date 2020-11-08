@@ -34,3 +34,4 @@ out/
 bin/
 
 lombok.config
+application-local.yaml
