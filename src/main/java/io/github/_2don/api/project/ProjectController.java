@@ -42,7 +42,7 @@ public class ProjectController {
     return projectService.getProject(accountId, projectId);
   }
 
-  @PatchMapping("/{projectId}")
+  @PatchMapping("/{oldProjectId}")
   public Project edit(@AuthenticationPrincipal Long accountId, @PathVariable Long oldProjectId,
       @Valid @RequestBody Project newProject) {
     return projectService.update(accountId, oldProjectId, newProject);

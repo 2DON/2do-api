@@ -31,7 +31,6 @@ public class Project {
   @Column(nullable = false)
   private Integer ordinal = Integer.MAX_VALUE;
 
-  @NotNull
   @NotBlank
   @Column(columnDefinition = "TEXT", nullable = false)
   private String description;
@@ -71,7 +70,7 @@ public class Project {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 
-  public Project(@NotNull @NotBlank String description) {
+  public Project(@NotBlank String description) {
     this.description = description;
   }
 }

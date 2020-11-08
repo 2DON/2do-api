@@ -38,12 +38,9 @@ public class ProjectService {
 
     project = projectJPA.save(project);
 
-    projectMemberJPA.save(new ProjectMember()
-      .setAccountId(accountId)
-      .setProjectId(project.getId())
-      .setPermissions(ProjectMemberPermissions.OWNER)
-      .setCreatedBy(account)
-      .setUpdatedBy(account));
+    projectMemberJPA.save(new ProjectMember().setAccountId(accountId).setProjectId(project.getId())
+        .setPermissions(ProjectMemberPermissions.OWNER).setCreatedBy(account)
+        .setUpdatedBy(account));
 
     return project;
   }
@@ -51,10 +48,10 @@ public class ProjectService {
   public Project update(Long accountId, Long oldProjectId, Project project) {
 
     ProjectMember projectMember =
-      projectMemberService.getProjectMember(accountId, oldProjectId).orElse(null);
+        projectMemberService.getProjectMember(accountId, oldProjectId).orElse(null);
 
     if (projectMember == null
-      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
+        || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -102,10 +99,10 @@ public class ProjectService {
   public void delete(Long accountId, Long projectId) {
 
     ProjectMember projectMember =
-      projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+        projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMember == null
-      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
+        || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -118,20 +115,24 @@ public class ProjectService {
 
   public Project getProject(Long accountId, Long projectId) {
 
-    Account account = accountService.getAccount(accountId);
-    Project project = projectJPA.getOne(projectId);
-
-    if( project == null || project.getCreatedBy().getId() != account.getId() ){
-      new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    if (!projectMemberService.exist(accountId, projectId)) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    return project;
+    return projectJPA.findById(projectId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   }
 
   public List<Project> getAllProjectByAccountId(Long accountId, boolean archived) {
     return projectMemberService.getAllProjectMembers(accountId).stream()
-      .map(ProjectMember::getProject).filter(project -> project.getArchived() == archived)
-      .sorted(Comparator.comparingInt(Project::getOrdinal)).collect(Collectors.toList());
+        .map(ProjectMember::getProject).filter(project -> project.getArchived() == archived)
+        .sorted(Comparator.comparingInt(Project::getOrdinal)).collect(Collectors.toList());
+  }
+
+  public List<Project> getAllProjectByAccountId(Long accountId) {
+    return projectMemberService.getAllProjectMembers(accountId).stream()
+        .map(ProjectMember::getProject).sorted(Comparator.comparingInt(Project::getOrdinal))
+        .collect(Collectors.toList());
   }
 
 
