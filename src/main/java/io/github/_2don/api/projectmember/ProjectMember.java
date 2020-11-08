@@ -21,12 +21,19 @@ import java.sql.Timestamp;
 public class ProjectMember {
 
   @Id
+  @Column(name = "account_id")
+  private Long accountId;
+
   @ManyToOne
-  @JoinColumn(referencedColumnName = "id", nullable = false)
+  @JoinColumn(name = "account_id", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   private Account account;
 
   @Id
+  @Column(name = "project_id")
+  private Long projectId;
+
   @ManyToOne
+  @JoinColumn(name = "project_id", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   private Project project;
 
   @ManyToOne

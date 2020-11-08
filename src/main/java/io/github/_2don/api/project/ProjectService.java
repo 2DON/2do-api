@@ -1,17 +1,19 @@
 package io.github._2don.api.project;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import io.github._2don.api.account.Account;
+import io.github._2don.api.account.AccountService;
+import io.github._2don.api.projectmember.ProjectMember;
+import io.github._2don.api.projectmember.ProjectMemberJPA;
+import io.github._2don.api.projectmember.ProjectMemberPermissions;
+import io.github._2don.api.projectmember.ProjectMemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountService;
-import io.github._2don.api.projectmember.ProjectMember;
-import io.github._2don.api.projectmember.ProjectMemberPermissions;
-import io.github._2don.api.projectmember.ProjectMemberService;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -22,23 +24,27 @@ public class ProjectService {
   private AccountService accountService;
   @Autowired
   private ProjectMemberService projectMemberService;
+  @Autowired
+  private ProjectMemberJPA projectMemberJPA;
 
   // fix
   public Project add(Long accountId, Project project) {
 
     Account account = accountService.getAccount(accountId);
 
-    if (!account.getPremium() && projectMemberService.exist(project)) {
-      // non-premium accounts can have only one project
-      throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
-    }
+    projectMemberService.assertProjectLimit(accountId);
 
     project.setCreatedBy(account);
     project.setUpdatedBy(account);
 
     project = projectJPA.save(project);
 
-    projectMemberService.add(project.getCreatedBy(), project, ProjectMemberPermissions.OWNER);
+    projectMemberJPA.save(new ProjectMember()
+      .setAccountId(accountId)
+      .setProjectId(project.getId())
+      .setPermissions(ProjectMemberPermissions.OWNER)
+      .setCreatedBy(account)
+      .setUpdatedBy(account));
 
     return project;
   }
@@ -46,10 +52,10 @@ public class ProjectService {
   public Project update(Long accountId, Long oldProjectId, Project project) {
 
     ProjectMember projectMember =
-        projectMemberService.getProjectMember(accountId, oldProjectId).orElse(null);
+      projectMemberService.getProjectMember(accountId, oldProjectId).orElse(null);
 
     if (projectMember == null
-        || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
+      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -97,10 +103,10 @@ public class ProjectService {
   public void delete(Long accountId, Long projectId) {
 
     ProjectMember projectMember =
-        projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+      projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMember == null
-        || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
+      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -127,10 +133,9 @@ public class ProjectService {
 
   public List<Project> getAllProjectByAccountId(Long accountId, boolean archived) {
     return projectMemberService.getAllProjectMembers(accountId).stream()
-        .map(ProjectMember::getProject).filter(project -> project.getArchived() == archived)
-        .sorted(Comparator.comparingInt(Project::getOrdinal)).collect(Collectors.toList());
+      .map(ProjectMember::getProject).filter(project -> project.getArchived() == archived)
+      .sorted(Comparator.comparingInt(Project::getOrdinal)).collect(Collectors.toList());
   }
-
 
 
 }
