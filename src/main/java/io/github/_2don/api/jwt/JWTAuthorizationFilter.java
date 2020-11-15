@@ -1,8 +1,5 @@
 package io.github._2don.api.jwt;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import io.github._2don.api.account.AccountJPA;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,20 +40,9 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     var token = header.substring(jwtConfig.getTokenPrefix().length());
 
-    Long accountId;
-    try {
-      accountId = Long.valueOf(
-        // create a token verifier with the same algorithm as before
-        JWT.require(Algorithm.HMAC512(jwtConfig.getSecret())).build()
-          // verify the token
-          .verify(token)
-          // get the accountId
-          .getSubject());
-    } catch (JWTVerificationException e) {
-      accountId = null;
-    }
+    var accountId = JWTUtils.verify(token, jwtConfig.getSecret());
 
-    if (accountId == null || !accountJPA.existsById(accountId)) {
+    if (accountId.isEmpty() || !accountJPA.existsById(accountId.get())) {
       response.setHeader("Access-Control-Expose-Headers", jwtConfig.getTokenHeader());
       response.setHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
       chain.doFilter(request, response);
@@ -64,8 +50,10 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     }
 
     // successful authentication, sets the @AuthenticationPrincipal principal to Long accountId
-    SecurityContextHolder.getContext().setAuthentication(
-      new UsernamePasswordAuthenticationToken(accountId, null, Collections.emptyList()));
+    SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+      accountId.get(),
+      null,
+      Collections.emptyList()));
     chain.doFilter(request, response);
   }
 

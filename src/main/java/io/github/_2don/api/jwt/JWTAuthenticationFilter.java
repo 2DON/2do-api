@@ -1,7 +1,5 @@
 package io.github._2don.api.jwt;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github._2don.api.account.Credentials;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,7 +14,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.Date;
 import java.util.Collections;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -66,18 +63,10 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                                           HttpServletResponse response,
                                           FilterChain chain,
                                           Authentication auth) throws IOException, ServletException {
-
-    var accountId = (Long) auth.getPrincipal();
-
-    var token = JWT
-      // create a token builder
-      .create()
-      // add the sub field
-      .withSubject(Long.toString(accountId))
-      // set expiration
-      .withExpiresAt(new Date(System.currentTimeMillis() + jwtConfig.getExpiration()))
-      // sign the token using the HMAC512 algorithm
-      .sign(Algorithm.HMAC512(jwtConfig.getSecret()));
+    var token = JWTUtils.create(
+      (Long) auth.getPrincipal(),
+      jwtConfig.getExpiration(),
+      jwtConfig.getSecret());
 
     response.setHeader("Access-Control-Expose-Headers", jwtConfig.getTokenHeader());
     response.setHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenPrefix() + token);
