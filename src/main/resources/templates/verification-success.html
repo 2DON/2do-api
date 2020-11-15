@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>2DO - Welcome</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      --webkit-font-smoothing: antialized-subpixel;
+    }
+
+    html, body {
+      height: 100%;
+
+      background-color: #121212;
+      color: white;
+
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    p + p {
+      margin-top: 1em;
+    }
+
+    svg, .msg {
+      --width: 50vmin;
+      width: var(--width);
+      height: calc(1.2987013 * var(--width));
+
+      max-width: 250px;
+      max-height: 320px;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: space-evenly;
+
+      width: 100%;
+    }
+
+    .msg {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      align-items: flex-start;
+    }
+
+    @media only screen and (max-width: 710px) {
+      body {
+        position: relative;
+      }
+
+      .msg {
+        text-align: center;
+      }
+
+      .msg * {
+        width: 100%;
+      }
+
+      svg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        z-index: 0;
+        transform: translate(-50%, -50%);
+
+        opacity: .03;
+        filter: blur(5px);
+
+        --width: 74vmin;
+        max-width: none;
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="msg">
+  <h1 th:text="'Welcome, '+ ${account_name}"></h1>
+  <div class="msg-body">
+    <p>Your email, <code th:text="${account_email}"></code>, is now paired with your account</p>
+    <p>We are really glad of having you</p>
+    <p>Sincerely, the 2DO team</p>
+  </div>
+  <footer>© 2DON/2DO - 2020</footer>
+</div>
+
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 770 1000"><defs/><path fill="currentColor" d="M590 26l9 6 6 9 2 11-4 14-8 13-64 108-17 29-78 131-90 152-72 120L90 929l-5 7-4 7-10 10-14 4-11-2-9-6-6-9-2-11 4-14 4-8 5-8 184-309 72-121 90-151 78-131 17-29 42-70v-1l7-12 12-19 11-19 6-6 4-4 14-4 11 3zM712 34l9 6 6 9 2 11-4 15-55 93-416 694-40 68-12 19-10 10-14 3-11-2-9-6-6-9-2-11 4-14 12-20 40-67 416-695 55-92 10-10 14-4 11 2z"/><path fill="currentColor" d="M700 909l14 7 10 9 4 11-4 12-10 9-14 7-18 2H196l-18-2-14-7-10-9-3-12 3-11 10-9 14-7 18-2h486l18 2z"/><path fill="currentColor" d="M711 37l9 6 6 9 2 11v872l-2 11-6 9-9 6-11 2-11-2-9-6-6-9-2-11V63l2-11 6-9 9-6 11-2 11 2zM583 25l9 6 6 9 2 11-2 11-6 9-9 6-11 2H75l-11-2-9-6-6-9-2-11 2-11 6-9 9-6 11-2h497l11 2z"/><path fill="currentColor" d="M82 27l9 6 6 9 2 11v69l-2 11-6 9-9 7-11 2-11-2-9-7-6-9-2-11V53l2-11 6-9 9-6 11-2 11 2z"/></svg>
+</body>
+</html>

@@ -38,6 +38,8 @@ public class Account {
   @Column(nullable = false, length = 45)
   private String name;
 
+  private Timestamp verificationMail;
+
   @Column(columnDefinition = "TEXT")
   @JsonProperty(access = Access.READ_ONLY)
   private String avatarUrl;

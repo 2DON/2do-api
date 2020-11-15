@@ -1,16 +1,18 @@
 package io.github._2don.api.account;
 
-import java.io.IOException;
-import java.sql.Date;
-import java.time.LocalDate;
+import io.github._2don.api.utils.ImageEncoder;
+import io.github._2don.api.utils.Patterns;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.utils.ImageEncoder;
-import io.github._2don.api.utils.Patterns;
+
+import java.io.IOException;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 
 @Service
 public class AccountService {
@@ -25,16 +27,15 @@ public class AccountService {
   /**
    * Create Account
    *
-   * @param email    String
-   * @param password String
+   * @param account Account
    * @return Account
    */
   public Account add(Account account) {
     account.setPremium(false);
 
     if (account.getEmail() == null || !Patterns.EMAIL.matches(account.getEmail())
-        || account.getEmail().length() > 45 || account.getPassword() == null
-        || account.getPassword().length() < 8) {
+      || account.getEmail().length() > 45 || account.getPassword() == null
+      || account.getPassword().length() < 8) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
     }
 
@@ -43,7 +44,9 @@ public class AccountService {
     }
 
     account.setPassword(bcrypt.encode(account.getPassword())).setName(account.getEmail())
-        .setOptions(null);
+      .setOptions(null);
+
+    account.setVerificationMail(new Timestamp(System.currentTimeMillis()));
 
     return accountJPA.save(account);
   }
@@ -60,10 +63,10 @@ public class AccountService {
    * @return Account
    */
   public Account update(Long accountId, String email, String password, String name, String options,
-      MultipartFile avatar) {
+                        MultipartFile avatar) {
 
     Account account = accountJPA.findById(accountId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
 
     if (email != null) {
       if (!Patterns.EMAIL.matches(email) || email.length() > 45) {
@@ -115,14 +118,14 @@ public class AccountService {
   /**
    * Delete User - "Request to Delete User"
    *
-   * @param accountId
-   * @param password
+   * @param accountId accountId
+   * @param password password
    */
   public void delete(Long accountId, String password) {
 
 
     Account account = accountJPA.findById(accountId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (!bcrypt.matches(password, account.getPassword())) {
       // wrong password
@@ -137,17 +140,16 @@ public class AccountService {
    * Get User Info
    *
    * @param accountId Long
-   * @param isPublic  boolean
    * @return JSONObject
    */
   public Account getAccount(Long accountId) {
     return accountJPA.findById(accountId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
   }
 
   public PublicAccount getPublicAccount(Long accountId) {
     Account account = accountJPA.findById(accountId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     return this.publicAccountConverter.convert(account);
   }
@@ -167,7 +169,7 @@ public class AccountService {
   /**
    * Asserts if account exists
    *
-   * @param accountId accountId
+   * @param email string
    */
   public boolean exist(String email) {
     if (!Patterns.EMAIL.matches(email))
@@ -178,17 +180,13 @@ public class AccountService {
   /**
    * Set Premium on User
    *
-   * @param accountId
+   * @param accountId accountId
    */
   public void obtainPremium(Long accountId) {
     Account account = accountJPA.findById(accountId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
-    if (account.getPremium()) {
-      account.setPremium(false);
-    } else {
-      account.setPremium(true);
-    }
+    account.setPremium(!account.getPremium());
 
     accountJPA.save(account);
   }
