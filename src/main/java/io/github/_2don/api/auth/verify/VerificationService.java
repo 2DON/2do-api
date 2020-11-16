@@ -6,7 +6,6 @@ import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.jwt.JWTUtils;
 import io.github._2don.api.mail.EmailService;
 import io.github._2don.api.utils.Resource;
-import io.github._2don.api.utils.TimeUtils;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,74 +22,89 @@ import java.util.Optional;
 @Service
 public class VerificationService {
 
+  private static final String VERIFICATION_HTML_TEMPLATE
+    = Resource.readAsString("/templates/verification-mail.html");
+  private static final String VERIFICATION_ENDPOINT_TEMPLATE
+    = "%s:%s/auth/sign-up/verify?token=%s";
+
+  private final String SERVER_HOST;
+  private final int SERVER_PORT;
   private final String SECRET;
+  private final String SUBJECT;
   private final long MIN_EXPIRATION;
   private final long MAX_EXPIRATION;
+
 
   @Autowired
   private AccountJPA accountJPA;
   @Autowired
   private EmailService emailService;
 
-  public VerificationService(@Value("${auth.verification.secret:${random.value}}") String secret,
+  public VerificationService(@Value("${server.host:http://127.0.0.1}") String serverHost,
+                             @Value("${server.port:8080}") int serverPort,
+                             @Value("${auth.verification.secret:${random.value}}") String secret,
+                             @Value("${auth.verification.subject}") String subject,
                              @Value("${auth.verification.min_exp:5}") long minExp,
                              @Value("${auth.verification.max_exp:10}") long maxExp) {
+    SERVER_HOST = serverHost;
+    SERVER_PORT = serverPort;
     SECRET = secret;
+    SUBJECT = subject;
     MIN_EXPIRATION = minExp;
     MAX_EXPIRATION = maxExp;
   }
 
-  /**
-   * Asserts if canAfter >= now.
-   *
-   * @param canAfter timestamp that indicates when the token can be re-generated
-   * @throws ResponseStatusException
-   */
-  private void assertCanRegenTokenNow(@NonNull Timestamp canAfter) throws ResponseStatusException {
-    if (canAfter.toInstant().toEpochMilli() >= Instant.now().toEpochMilli()) {
+  @NonNull
+  private static Content buildMailContent(@NonNull String name,
+                                          @NonNull String url) {
+    return new Content(
+      "text/html",
+      VERIFICATION_HTML_TEMPLATE
+        .replaceAll("\\{\\{account_name}}", name)
+        .replaceAll("\\{\\{account_verification_url}}", url));
+  }
+
+  private void assertCanSendNewMail(@NonNull Timestamp verificationSentAt) throws ResponseStatusException {
+    if (verificationSentAt.toInstant().plusSeconds(MIN_EXPIRATION).toEpochMilli() >= Instant.now().toEpochMilli()) {
       throw new ResponseStatusException(HttpStatus.LOCKED);
     }
   }
 
-  @NonNull
-  private String createVerificationToken(@NonNull Account account) {
-    var verification = Optional
-      .ofNullable(account.getVerification())
-      .orElse(new AccountVerification()
-        .setId(account.getId())
-        .setAccount(account)
-        .setMinExp(new Timestamp(TimeUtils
-          .nowPlusMinutes(MIN_EXPIRATION))));
-
-    if (verification.getToken() != null) {
-      assertCanRegenTokenNow(verification.getMinExp());
-    }
-
-    var token = Optional
-      .ofNullable(verification.getToken())
-      .orElse(JWTUtils.create(
-        account.getId(),
-        MAX_EXPIRATION,
-        SECRET));
-
-    account.setVerification(verification.setToken(token));
-    accountJPA.save(account);
-    return token;
-  }
-
   public void sendMail(@NonNull Account account) throws ResponseStatusException, IOException {
-    var token = createVerificationToken(account);
+    var token = JWTUtils.create(account.getId(), MAX_EXPIRATION, SECRET);
 
-    var html = Resource.readAsString("/templates/verification-mail.html");
-    html = html.replaceAll("\\{\\{account_name}}", account.getName());
-    html = html.replaceAll("\\{\\{account_verification_url}}", "https://google.com");
+    var content = buildMailContent(
+      account.getName(),
+      String.format(
+        VERIFICATION_ENDPOINT_TEMPLATE,
+        SERVER_HOST, SERVER_PORT, token));
 
-    emailService.sendEmail("email", "2DO verification mail", new Content("text/html", html));
+    if (!emailService.send(account.getEmail(), SUBJECT, content)) {
+      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  public String verify(String token, @NonNull Model model) {
-    model.addAttribute("account_name", "Wesley");
-    model.addAttribute("account_email", "wesauis@htb.local");
+  @NonNull
+  public String verify(String token,
+                       @NonNull Model model) {
+    var target
+      = Optional.ofNullable(token)
+      .flatMap(_token -> JWTUtils.verify(_token, SECRET))
+      .flatMap(accountJPA::findById);
+
+    if (target.map(Account::isVerified).orElse(true))
+      // invalid token or account already verified
+      return "verification-error";
+
+    var account = target.get();
+
+    // set account as verified
+    account.setVerificationSentAt(null);
+    accountJPA.save(account);
+
+    model
+      .addAttribute("account_name", account.getName())
+      .addAttribute("account_email", account.getEmail());
 
     return "verification-success";
   }

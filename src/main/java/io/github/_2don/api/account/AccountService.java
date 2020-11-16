@@ -1,5 +1,6 @@
 package io.github._2don.api.account;
 
+import io.github._2don.api.auth.verify.VerificationService;
 import io.github._2don.api.utils.ImageEncoder;
 import io.github._2don.api.utils.Patterns;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 public class AccountService {
@@ -22,7 +24,7 @@ public class AccountService {
   @Autowired
   private BCryptPasswordEncoder bcrypt;
   @Autowired
-  private AccountToPublicAccountConverter publicAccountConverter;
+  private VerificationService verificationService;
 
   /**
    * Create Account
@@ -30,7 +32,7 @@ public class AccountService {
    * @param account Account
    * @return Account
    */
-  public Account add(Account account) {
+  public Account add(Account account) throws IOException {
     account.setPremium(false);
 
     if (account.getEmail() == null || !Patterns.EMAIL.matches(account.getEmail())
@@ -43,12 +45,16 @@ public class AccountService {
       throw new ResponseStatusException(HttpStatus.CONFLICT);
     }
 
-    account.setPassword(bcrypt.encode(account.getPassword())).setName(account.getEmail())
-      .setOptions(null);
+    account
+      .setPassword(bcrypt.encode(account.getPassword()))
+      .setName(account.getEmail())
+      .setOptions(null)
+      .setVerificationSentAt(new Timestamp(System.currentTimeMillis()));
 
-//  TODO account.setVerificationMail(new Timestamp(System.currentTimeMillis()));
+    account = accountJPA.save(account);
+    verificationService.sendMail(account);
 
-    return accountJPA.save(account);
+    return account;
   }
 
   /**
@@ -119,7 +125,7 @@ public class AccountService {
    * Delete User - "Request to Delete User"
    *
    * @param accountId accountId
-   * @param password password
+   * @param password  password
    */
   public void delete(Long accountId, String password) {
 
@@ -147,11 +153,8 @@ public class AccountService {
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
   }
 
-  public PublicAccount getPublicAccount(Long accountId) {
-    Account account = accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-    return this.publicAccountConverter.convert(account);
+  public Optional<PublicAccount> getPublicAccount(Long accountId) {
+    return accountJPA.findPublicById(accountId);
   }
 
   /**

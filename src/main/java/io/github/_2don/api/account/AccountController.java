@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import io.github._2don.api.jwt.JWTConfig;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/accounts")
 public class AccountController {
@@ -34,7 +36,7 @@ public class AccountController {
 
   @PostMapping("/sign-up")
   @ResponseStatus(HttpStatus.CREATED)
-  public Account signUp(@RequestBody Account account) {
+  public Account signUp(@RequestBody Account account) throws IOException {
     return accountService.add(account);
   }
 
@@ -57,7 +59,7 @@ public class AccountController {
 
   @GetMapping("/info/{accountId}")
   public ResponseEntity<PublicAccount> show(@PathVariable Long accountId) {
-    return ResponseEntity.ok(accountService.getPublicAccount(accountId));
+    return ResponseEntity.of(accountService.getPublicAccount(accountId));
   }
 
   @DeleteMapping("/delete")

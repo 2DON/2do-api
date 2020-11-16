@@ -20,9 +20,8 @@ public class VerificationController {
   private VerificationService verificationService;
 
   @GetMapping()
-  public String verify(@RequestParam(required = false) String token, Model model) throws IOException {
-    verificationService.sendMail(accountJPA.findAll().stream().findFirst().orElse(null));
-
+  public String verify(@RequestParam(required = false) String token,
+                       Model model) throws IOException {
     return verificationService.verify(token, model);
   }
 

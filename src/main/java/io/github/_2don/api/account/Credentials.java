@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 
 public interface Credentials {
 
@@ -15,6 +16,8 @@ public interface Credentials {
 
   Date getDeleteRequest();
 
+  Timestamp getVerificationSentAt();
+
   @Data
   @Accessors(chain = true)
   class Impl implements Credentials {
@@ -23,6 +26,7 @@ public interface Credentials {
     private String email;
     private String password;
     private Date deleteRequest;
+    private Timestamp verificationSentAt;
 
   }
 }

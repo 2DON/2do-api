@@ -16,6 +16,8 @@ spring:
       enabled: true
       file-size-threshold: 2KB
       max-file-size: 900KB
+server:
+  host: <host>
 
 # TODO fix structure
 auth:
@@ -26,6 +28,7 @@ auth:
     expiration: 480
     expired_value: EXPIRED
   verification:
+    subject: 2DO Account Verification
     secret: <verification-secret>
     min_exp: 5
     max_exp: 10

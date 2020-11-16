@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import io.github._2don.api.auth.verify.AccountVerification;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -38,9 +37,7 @@ public class Account {
   private String name;
 
   @JsonIgnore
-  @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
-  @PrimaryKeyJoinColumn
-  private AccountVerification verification;
+  private Timestamp verificationSentAt;
 
   @Column(columnDefinition = "TEXT")
   @JsonProperty(access = Access.READ_ONLY)
@@ -65,6 +62,10 @@ public class Account {
   @Column(nullable = false)
   @JsonProperty(access = Access.READ_ONLY)
   private Timestamp updatedAt;
+
+  public boolean isVerified() {
+    return this.verificationSentAt == null;
+  }
 
   public Account(String email, String password) {
     this.email = email;

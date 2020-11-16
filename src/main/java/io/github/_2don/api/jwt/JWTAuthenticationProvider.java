@@ -28,6 +28,10 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
     var credentials = accountJPA.findByEmail(email)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
+    if (credentials.getVerificationSentAt() != null) {
+      throw new ResponseStatusException(HttpStatus.LOCKED);
+    }
+
     if (credentials.getDeleteRequest() != null) {
       if (credentials.getDeleteRequest().compareTo(new Date(System.currentTimeMillis())) > 0) {
         // account is still valid, so we will cancel the delete request
