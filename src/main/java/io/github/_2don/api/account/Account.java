@@ -1,18 +1,17 @@
 package io.github._2don.api.account;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
+import io.github._2don.api.auth.verify.AccountVerification;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.sql.Date;
 import java.sql.Timestamp;
 
@@ -38,7 +37,10 @@ public class Account {
   @Column(nullable = false, length = 45)
   private String name;
 
-  private Timestamp verificationMail;
+  @JsonIgnore
+  @OneToOne(mappedBy = "account", cascade = CascadeType.ALL)
+  @PrimaryKeyJoinColumn
+  private AccountVerification verification;
 
   @Column(columnDefinition = "TEXT")
   @JsonProperty(access = Access.READ_ONLY)

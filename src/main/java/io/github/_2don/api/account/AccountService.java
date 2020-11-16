@@ -46,7 +46,7 @@ public class AccountService {
     account.setPassword(bcrypt.encode(account.getPassword())).setName(account.getEmail())
       .setOptions(null);
 
-    account.setVerificationMail(new Timestamp(System.currentTimeMillis()));
+//  TODO account.setVerificationMail(new Timestamp(System.currentTimeMillis()));
 
     return accountJPA.save(account);
   }

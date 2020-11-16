@@ -15,5 +15,3 @@ server:
 
 auth:
   secret: ${random.value}
-
-

@@ -7,19 +7,28 @@ spring:
     password: <password>
   jpa:
     generate-ddl: true
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
   servlet:
     multipart:
       enabled: true
       file-size-threshold: 2KB
       max-file-size: 900KB
 
+# TODO fix structure
 auth:
   secret: <secret>
   token:
     header: Authorization
     prefix: Bearer_
-    expiration: 2880000 # 8 hours
+    expiration: 480
     expired_value: EXPIRED
+  verification:
+    secret: <verification-secret>
+    min_exp: 5
+    max_exp: 10
 
 mail:
   sendgrid:
