@@ -1,4 +1,4 @@
-package io.github._2don.api.auth.verify;
+package io.github._2don.api.verification;
 
 import io.github._2don.api.account.AccountJPA;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 
@@ -28,7 +29,7 @@ public class VerificationController {
 
   @GetMapping("/re-send")
   @ResponseBody
-  public void reSend(@RequestParam String email) throws IOException {
+  public void reSend(@RequestParam String email) throws IOException, ResponseStatusException {
     verificationService.reSend(email);
   }
 

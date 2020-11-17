@@ -10,15 +10,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import io.github._2don.api.jwt.JWTConfig;
-
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/accounts")
@@ -31,16 +28,16 @@ public class AccountController {
 
   @GetMapping("/exists/{email}")
   public boolean exists(@PathVariable String email) {
-    return accountService.exist(email);
+    return accountService.exists(email);
   }
 
-  @PostMapping("/sign-up")
-  @ResponseStatus(HttpStatus.CREATED)
-  public Account signUp(@RequestBody Account account) throws IOException {
-    return accountService.add(account);
+  @GetMapping("/me")
+  public ResponseEntity<Account> info(@AuthenticationPrincipal Long accountId) {
+    return ResponseEntity.of(accountService.getAccount(accountId));
   }
 
-  @PatchMapping("/edit")
+  // TODO mode avatar to custom route
+  @PatchMapping("/me")
   @ResponseStatus(HttpStatus.OK)
   public Account edit(@AuthenticationPrincipal Long accountId,
       @RequestPart(name = "email", required = false) String email,
@@ -52,27 +49,24 @@ public class AccountController {
     return accountService.update(accountId, email, password, name, options, avatar);
   }
 
-  @GetMapping("/info")
-  public ResponseEntity<Account> info(@AuthenticationPrincipal Long accountId) {
-    return ResponseEntity.ok(accountService.getAccount(accountId));
-  }
-
-  @GetMapping("/info/{accountId}")
-  public ResponseEntity<PublicAccount> show(@PathVariable Long accountId) {
-    return ResponseEntity.of(accountService.getPublicAccount(accountId));
-  }
-
-  @DeleteMapping("/delete")
+  // TODO fixme
+  @DeleteMapping("/me")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
-      @RequestPart(name = "password", required = true) String password,
-      HttpServletResponse response) {
+                      @RequestPart(name = "password", required = true) String password,
+                      HttpServletResponse response) {
 
     accountService.delete(accountId, password);
     response.addHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
   }
 
-  @PostMapping("/premium")
+  @GetMapping("/{accountId}")
+  public ResponseEntity<PublicAccount> show(@PathVariable Long accountId) {
+    return ResponseEntity.of(accountService.getPublicAccount(accountId));
+  }
+
+  // TODO -- test only
+  @PostMapping("/me/mock-premium")
   @ResponseStatus(HttpStatus.OK)
   public void premium(@AuthenticationPrincipal Long accountId) {
     accountService.obtainPremium(accountId);

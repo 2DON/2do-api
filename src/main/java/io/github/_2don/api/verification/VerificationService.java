@@ -1,4 +1,4 @@
-package io.github._2don.api.auth.verify;
+package io.github._2don.api.verification;
 
 import com.sendgrid.Content;
 import io.github._2don.api.account.Account;
@@ -65,7 +65,7 @@ public class VerificationService {
         .replaceAll("\\{\\{account_verification_url}}", url));
   }
 
-  private void assertCanSendNewMail(@NonNull Timestamp verificationSentAt) throws ResponseStatusException {
+  public void assertCanSendNewMail(@NonNull Timestamp verificationSentAt) throws ResponseStatusException {
     if (verificationSentAt.toInstant().toEpochMilli() + TimeUnit.MINUTES.toMillis(MIN_EXPIRATION) >= Instant.now().toEpochMilli()) {
       throw new ResponseStatusException(HttpStatus.LOCKED);
     }
@@ -110,7 +110,7 @@ public class VerificationService {
     return "verification-success";
   }
 
-  public void reSend(@NonNull String email) throws IOException {
+  public void reSend(@NonNull String email) throws IOException, ResponseStatusException {
     var account = accountJPA.findByEmail(email)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 

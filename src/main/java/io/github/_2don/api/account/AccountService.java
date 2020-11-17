@@ -1,8 +1,9 @@
 package io.github._2don.api.account;
 
-import io.github._2don.api.auth.verify.VerificationService;
 import io.github._2don.api.utils.ImageEncoder;
 import io.github._2don.api.utils.Patterns;
+import io.github._2don.api.verification.VerificationService;
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -27,47 +28,42 @@ public class AccountService {
   private VerificationService verificationService;
 
   /**
-   * Create Account
+   * Asserts if account exists
    *
-   * @param account Account
-   * @return Account
+   * @param accountId accountId
+   * @param status    status
    */
-  public Account add(Account account) throws IOException {
-    account.setPremium(false);
+  public void assertExists(Long accountId, HttpStatus status) throws ResponseStatusException {
+    if (!accountJPA.existsById(accountId)) {
+      throw new ResponseStatusException(status);
+    }
+  }
 
-    if (account.getEmail() == null || !Patterns.EMAIL.matches(account.getEmail())
-      || account.getEmail().length() > 45 || account.getPassword() == null
-      || account.getPassword().length() < 8) {
+  public void create(@NonNull String email,
+                     @NonNull String password,
+                     String name,
+                     String options) throws IOException, ResponseStatusException {
+    if (!Patterns.EMAIL.matches(email) || email.length() > 45
+      || password.length() < 8 || password.getBytes().length > 72) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
     }
 
-    if (accountJPA.existsByEmail(account.getEmail())) {
+    if (accountJPA.existsByEmail(email)) {
       throw new ResponseStatusException(HttpStatus.CONFLICT);
     }
 
-    account
-      .setPassword(bcrypt.encode(account.getPassword()))
-      .setName(account.getEmail())
-      .setOptions(null)
+    var account = new Account()
+      .setEmail(email)
+      .setPassword(bcrypt.encode(password))
+      .setName(name == null ? email : name)
+      .setOptions(options)
       .setVerificationSentAt(new Timestamp(System.currentTimeMillis()));
 
     account = accountJPA.save(account);
     verificationService.sendMail(account);
-
-    return account;
   }
 
-  /**
-   * Update User
-   *
-   * @param accountId Long
-   * @param email     String
-   * @param password  String
-   * @param name      String
-   * @param options   String
-   * @param avatar    MultipartFile
-   * @return Account
-   */
+  // TODO FIXME
   public Account update(Long accountId, String email, String password, String name, String options,
                         MultipartFile avatar) {
 
@@ -121,15 +117,38 @@ public class AccountService {
     return accountJPA.save(account);
   }
 
+  public void fixEmail(String email, String newEmail) throws ResponseStatusException, IOException {
+    var account = accountJPA.findByEmail(email)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    if (account.isVerified()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    if (!Patterns.EMAIL.matches(newEmail) || newEmail.length() > 45) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+    }
+
+    if (accountJPA.existsByEmail(newEmail)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT);
+    }
+
+    verificationService.assertCanSendNewMail(account.getVerificationSentAt());
+
+    account.setEmail(newEmail);
+    account.setVerificationSentAt(new Timestamp(System.currentTimeMillis()));
+    verificationService.sendMail(account);
+    accountJPA.save(account);
+  }
+
+  // TODO FIXME
   /**
    * Delete User - "Request to Delete User"
    *
    * @param accountId accountId
    * @param password  password
    */
-  public void delete(Long accountId, String password) {
-
-
+  public void delete(Long accountId, String password) throws ResponseStatusException {
     Account account = accountJPA.findById(accountId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -142,50 +161,24 @@ public class AccountService {
     accountJPA.save(account);
   }
 
-  /**
-   * Get User Info
-   *
-   * @param accountId Long
-   * @return JSONObject
-   */
-  public Account getAccount(Long accountId) {
-    return accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+  public Optional<Account> getAccount(Long accountId) {
+    return accountJPA.findById(accountId);
   }
 
   public Optional<PublicAccount> getPublicAccount(Long accountId) {
     return accountJPA.findPublicById(accountId);
   }
 
-  /**
-   * Asserts if account exists
-   *
-   * @param accountId accountId
-   * @param status    status
-   */
-  public void assertExists(Long accountId, HttpStatus status) {
-    if (!accountJPA.existsById(accountId)) {
-      throw new ResponseStatusException(status);
-    }
+  public boolean exists(String email) {
+    return Patterns.EMAIL.matches(email) && accountJPA.existsByEmail(email);
   }
 
   /**
-   * Asserts if account exists
-   *
-   * @param email string
-   */
-  public boolean exist(String email) {
-    if (!Patterns.EMAIL.matches(email))
-      return false;
-    return accountJPA.existsByEmail(email);
-  }
-
-  /**
-   * Set Premium on User
+   * toggle premium on logged account
    *
    * @param accountId accountId
    */
-  public void obtainPremium(Long accountId) {
+  public void obtainPremium(Long accountId) throws ResponseStatusException {
     Account account = accountJPA.findById(accountId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -193,4 +186,5 @@ public class AccountService {
 
     accountJPA.save(account);
   }
+
 }
