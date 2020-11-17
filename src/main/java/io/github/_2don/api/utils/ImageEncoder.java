@@ -5,12 +5,16 @@ import java.util.Set;
 
 public class ImageEncoder {
 
-  public static final Set<String> MIME_TYPES =
+  private static final String BASE64_ENCODED_IMAGE_PREFIX = "data:image/png;base64,";
+  private static final Set<String> MIME_TYPES =
     Set.of("image/png", "image/jpeg", "application/octet-stream");
 
-  private static final String BASE64_ENCODED_IMAGE_PREFIX = "data:image/png;base64,";
 
   private ImageEncoder() {
+  }
+
+  public static boolean supports(String mimeType) {
+    return MIME_TYPES.contains(mimeType);
   }
 
   public static String encodeToString(byte[] bytes) {

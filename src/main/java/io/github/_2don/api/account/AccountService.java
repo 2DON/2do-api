@@ -33,7 +33,8 @@ public class AccountService {
    * @param accountId accountId
    * @param status    status
    */
-  public void assertExists(Long accountId, HttpStatus status) throws ResponseStatusException {
+  public void assertExists(@NonNull Long accountId,
+                           @NonNull HttpStatus status) throws ResponseStatusException {
     if (!accountJPA.existsById(accountId)) {
       throw new ResponseStatusException(status);
     }
@@ -44,7 +45,8 @@ public class AccountService {
                      String name,
                      String options) throws IOException, ResponseStatusException {
     if (!Patterns.EMAIL.matches(email) || email.length() > 45
-      || password.length() < 8 || password.getBytes().length > 72) {
+      || password.length() < 8 || password.getBytes().length > 72
+      || (name != null && name.length() >= 1 && name.length() <= 45)) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
     }
 
@@ -63,10 +65,11 @@ public class AccountService {
     verificationService.sendMail(account);
   }
 
-  // TODO FIXME
-  public Account update(Long accountId, String email, String password, String name, String options,
-                        MultipartFile avatar) {
-
+  public Account update(@NonNull Long accountId,
+                        String email,
+                        String password,
+                        String name,
+                        String options) {
     Account account = accountJPA.findById(accountId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
 
@@ -83,7 +86,7 @@ public class AccountService {
     }
 
     if (password != null) {
-      if (password.length() < 8) {
+      if (password.length() < 8 || password.getBytes().length > 72) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
 
@@ -99,11 +102,21 @@ public class AccountService {
     }
 
     if (options != null) {
-      account.setOptions(options);
+      account.setOptions(options.length() == 0 ? null : options);
     }
 
-    if (avatar != null) {
-      if (!ImageEncoder.MIME_TYPES.contains(avatar.getContentType())) {
+    return accountJPA.save(account);
+  }
+
+  public Account updateAvatar(@NonNull Long accountId,
+                              MultipartFile avatar) {
+    var account = accountJPA.findById(accountId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
+
+    if (avatar == null || avatar.isEmpty()) {
+      account.setAvatarUrl(null);
+    } else {
+      if (!ImageEncoder.supports(avatar.getContentType())) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
 
@@ -114,10 +127,12 @@ public class AccountService {
       }
     }
 
-    return accountJPA.save(account);
+    accountJPA.save(account);
+    return account;
   }
 
-  public void fixEmail(String email, String newEmail) throws ResponseStatusException, IOException {
+  public void fixEmail(@NonNull String email,
+                       @NonNull String newEmail) throws ResponseStatusException, IOException {
     var account = accountJPA.findByEmail(email)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -141,14 +156,14 @@ public class AccountService {
     accountJPA.save(account);
   }
 
-  // TODO FIXME
   /**
    * Delete User - "Request to Delete User"
    *
    * @param accountId accountId
    * @param password  password
    */
-  public void delete(Long accountId, String password) throws ResponseStatusException {
+  public void delete(@NonNull Long accountId,
+                     @NonNull String password) throws ResponseStatusException {
     Account account = accountJPA.findById(accountId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
@@ -161,15 +176,15 @@ public class AccountService {
     accountJPA.save(account);
   }
 
-  public Optional<Account> getAccount(Long accountId) {
+  public Optional<Account> getAccount(@NonNull Long accountId) {
     return accountJPA.findById(accountId);
   }
 
-  public Optional<PublicAccount> getPublicAccount(Long accountId) {
+  public Optional<PublicAccount> getPublicAccount(@NonNull Long accountId) {
     return accountJPA.findPublicById(accountId);
   }
 
-  public boolean exists(String email) {
+  public boolean exists(@NonNull String email) {
     return Patterns.EMAIL.matches(email) && accountJPA.existsByEmail(email);
   }
 
@@ -178,7 +193,7 @@ public class AccountService {
    *
    * @param accountId accountId
    */
-  public void obtainPremium(Long accountId) throws ResponseStatusException {
+  public void obtainPremium(@NonNull Long accountId) throws ResponseStatusException {
     Account account = accountJPA.findById(accountId)
       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 

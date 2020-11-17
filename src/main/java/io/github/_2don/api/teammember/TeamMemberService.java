@@ -1,14 +1,15 @@
 package io.github._2don.api.teammember;
 
-import java.util.List;
+import io.github._2don.api.account.AccountJPA;
+import io.github._2don.api.account.AccountService;
+import io.github._2don.api.team.TeamJPA;
+import io.github._2don.api.team.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountService;
-import io.github._2don.api.team.Team;
-import io.github._2don.api.team.TeamService;
+
+import java.util.List;
 
 @Service
 public class TeamMemberService {
@@ -19,11 +20,17 @@ public class TeamMemberService {
   private AccountService accountService;
   @Autowired
   private TeamMembersJPA teamMembersJPA;
+  @Autowired
+  private AccountJPA accountJPA;
+  @Autowired
+  private TeamJPA teamJPA;
 
   public TeamMember add(Long accountId, Long teamId) {
 
-    Account account = accountService.getAccount(accountId);
-    Team team = teamService.getTeam(teamId);
+    var account = accountService.getAccount(accountId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var team = teamJPA.findById(teamId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (!account.getPremium()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -41,17 +48,20 @@ public class TeamMemberService {
 
   public TeamMember add(Long accountId, Long teamId, Long memberId) {
 
-    Account account = accountService.getAccount(accountId);
-    Account member = accountService.getAccount(memberId);
 
-    Team team = teamService.getTeam(teamId);
+    var account = accountService.getAccount(accountId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var member = accountService.getAccount(memberId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var team = teamJPA.findById(teamId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (!account.getPremium()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     var teamMembers = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
     if (!teamMembers.getOperator()) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
@@ -88,7 +98,7 @@ public class TeamMemberService {
 
   public TeamMember getTeamMember(Long accountId, Long teamId) {
     return teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   }
 
   public boolean exist(Long accountId, Long teamId) {
@@ -132,7 +142,7 @@ public class TeamMemberService {
 
   public void delete(Long accountId, Long teamId) {
     var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
     Long countOpertors = teamMembersJPA.countByTeamIdAndOperator(teamId, true);
 

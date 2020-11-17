@@ -1,18 +1,19 @@
 package io.github._2don.api.project;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.account.Account;
+import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.projectmember.ProjectMember;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
 import io.github._2don.api.projectmember.ProjectMemberPermissions;
 import io.github._2don.api.projectmember.ProjectMemberService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectService {
@@ -24,12 +25,15 @@ public class ProjectService {
   @Autowired
   private ProjectMemberService projectMemberService;
   @Autowired
+  private AccountJPA accountJPA;
+  @Autowired
   private ProjectMemberJPA projectMemberJPA;
 
-  // fix
+  // FIXME
   public Project add(Long accountId, Project project) {
 
-    Account account = accountService.getAccount(accountId);
+    var account = accountJPA.findById(accountId)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     projectMemberService.assertProjectLimit(accountId);
 
@@ -39,24 +43,24 @@ public class ProjectService {
     project = projectJPA.save(project);
 
     projectMemberJPA.save(new ProjectMember().setAccountId(accountId).setProjectId(project.getId())
-        .setPermissions(ProjectMemberPermissions.OWNER).setCreatedBy(account)
-        .setUpdatedBy(account));
+      .setPermissions(ProjectMemberPermissions.OWNER).setCreatedBy(account)
+      .setUpdatedBy(account));
 
     return project;
   }
 
   public Project update(Long accountId, Long oldProjectId, Project project) {
 
-    ProjectMember projectMember =
-        projectMemberService.getProjectMember(accountId, oldProjectId).orElse(null);
+    var projectMember =
+      projectMemberService.getProjectMember(accountId, oldProjectId).orElse(null);
 
     if (projectMember == null
-        || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
+      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    Project projectEdit = projectMember.getProject();
+    var projectEdit = projectMember.getProject();
 
     // project is archived and the request don't unarchive it
     // TODO archiving deserves his own route?
@@ -91,7 +95,7 @@ public class ProjectService {
       }
     }
 
-    projectEdit.setUpdatedBy(accountService.getAccount(accountId));
+    projectEdit.setUpdatedBy(projectMember.getAccount());
 
     return projectJPA.save(projectEdit);
   }
@@ -99,10 +103,10 @@ public class ProjectService {
   public void delete(Long accountId, Long projectId) {
 
     ProjectMember projectMember =
-        projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+      projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMember == null
-        || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
+      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
@@ -120,19 +124,19 @@ public class ProjectService {
     }
 
     return projectJPA.findById(projectId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
   }
 
   public List<Project> getAllProjectByAccountId(Long accountId, boolean archived) {
     return projectMemberService.getAllProjectMembers(accountId).stream()
-        .map(ProjectMember::getProject).filter(project -> project.getArchived() == archived)
-        .sorted(Comparator.comparingInt(Project::getOrdinal)).collect(Collectors.toList());
+      .map(ProjectMember::getProject).filter(project -> project.getArchived() == archived)
+      .sorted(Comparator.comparingInt(Project::getOrdinal)).collect(Collectors.toList());
   }
 
   public List<Project> getAllProjectByAccountId(Long accountId) {
     return projectMemberService.getAllProjectMembers(accountId).stream()
-        .map(ProjectMember::getProject).sorted(Comparator.comparingInt(Project::getOrdinal))
-        .collect(Collectors.toList());
+      .map(ProjectMember::getProject).sorted(Comparator.comparingInt(Project::getOrdinal))
+      .collect(Collectors.toList());
   }
 
 

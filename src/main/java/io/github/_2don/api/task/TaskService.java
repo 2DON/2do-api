@@ -1,15 +1,16 @@
 package io.github._2don.api.task;
 
-import java.util.List;
+import io.github._2don.api.account.AccountJPA;
+import io.github._2don.api.account.AccountService;
+import io.github._2don.api.projectmember.ProjectMemberPermissions;
+import io.github._2don.api.projectmember.ProjectMemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountService;
-import io.github._2don.api.projectmember.ProjectMemberPermissions;
-import io.github._2don.api.projectmember.ProjectMemberService;
+
+import java.util.List;
 
 @Service
 public class TaskService {
@@ -20,19 +21,22 @@ public class TaskService {
   private AccountService accountService;
   @Autowired
   private ProjectMemberService projectMemberService;
+  @Autowired
+  private AccountJPA accountJPA;
 
   public Task add(Long accountId, Task task, Long projectId) {
     // account is member of project and has permission
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    var account = accountService.getAccount(accountId);
-
-    task.setCreatedBy(account).setUpdatedBy(account).setProject(projectMeta.getProject());
+    task
+      .setCreatedBy(projectMeta.getAccount())
+      .setUpdatedBy(projectMeta.getAccount())
+      .setProject(projectMeta.getProject());
 
     return taskJPA.save(task);
   }
@@ -42,19 +46,19 @@ public class TaskService {
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
-    var account = accountService.getAccount(accountId);
-    var assignedTo = accountService.getAccount(assignedToId);
+    // FIXME assigned to is supposed to be OPTIONAL NOT REQUIRED
+    // var assignedTo = accountService.getAccount(assignedToId);
 
     Task task = new Task();
-    task.setCreatedBy(account);
-    task.setUpdatedBy(account);
+    task.setCreatedBy(projectMeta.getAccount());
+    task.setUpdatedBy(projectMeta.getAccount());
     task.setProject(projectMeta.getProject());
     task.setDescription(description);
-    task.setAssignedTo(assignedTo);
+    task.setAssignedTo(null);
 
     return taskJPA.save(task);
   }
@@ -64,12 +68,12 @@ public class TaskService {
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     var taskEdit = taskJPA.findByIdAndProjectId(taskId, projectId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (task.getOrdinal() != null) {
       taskEdit.setOrdinal(task.getOrdinal());
@@ -97,24 +101,24 @@ public class TaskService {
       taskEdit.setAssignedTo(task.getAssignedTo());
     }
 
-    taskEdit.setUpdatedBy(accountService.getAccount(accountId));
+    taskEdit.setUpdatedBy(projectMeta.getAccount());
 
     return taskJPA.save(taskEdit);
   }
 
   public Task update(Long accountId, Long projectId, Long taskId, Integer ordinal,
-      String description, String status, String options, Long assignedToId) {
+                     String description, String status, String options, Long assignedToId) {
 
     // account is member of project and has permission
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     var taskEdit = taskJPA.findByIdAndProjectId(taskId, projectId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
 
     if (ordinal != null) {
       taskEdit.setOrdinal(ordinal);
@@ -128,7 +132,7 @@ public class TaskService {
     }
 
     if (status != null) {
-
+      // FIXME what?
       TaskStatus taskStatus = TaskStatus.valueOf(status);
 
       if (taskStatus != null) {
@@ -144,12 +148,10 @@ public class TaskService {
     }
 
     if (assignedToId != null) {
-      Account assignedTo = accountService.getAccount(assignedToId);
-
-      taskEdit.setAssignedTo(assignedTo);
+      taskEdit.setAssignedTo(accountJPA.getOne(assignedToId));
     }
 
-    taskEdit.setUpdatedBy(accountService.getAccount(accountId));
+    taskEdit.setUpdatedBy(projectMeta.getAccount());
 
     return taskJPA.save(taskEdit);
   }
@@ -159,7 +161,7 @@ public class TaskService {
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 

@@ -1,15 +1,16 @@
 package io.github._2don.api.step;
 
-import java.util.List;
+import io.github._2don.api.account.AccountService;
+import io.github._2don.api.projectmember.ProjectMemberPermissions;
+import io.github._2don.api.projectmember.ProjectMemberService;
+import io.github._2don.api.task.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.account.AccountService;
-import io.github._2don.api.projectmember.ProjectMemberPermissions;
-import io.github._2don.api.projectmember.ProjectMemberService;
-import io.github._2don.api.task.TaskService;
+
+import java.util.List;
 
 @Service
 public class StepService {
@@ -29,14 +30,14 @@ public class StepService {
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     // step exists and belongs to task and project
     var stepEdit = stepJPA.findById(stepId).orElse(null);
     if (stepEdit == null || !stepEdit.getTask().getId().equals(taskId)
-        || !stepEdit.getTask().getProject().getId().equals(projectId)) {
+      || !stepEdit.getTask().getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
@@ -65,26 +66,26 @@ public class StepService {
       stepEdit.setObservation(step.getObservation());
     }
 
-    stepEdit.setUpdatedBy(accountService.getAccount(accountId));
+    stepEdit.setUpdatedBy(projectMeta.getAccount());
 
     return stepJPA.save(stepEdit);
   }
 
   public Step edit(Long accountId, Long stepId, Long projectId, Long taskId, Integer ordinal,
-      String description, String observation, String status) {
+                   String description, String observation, String status) {
 
     // account is member of project and has permission
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     // step exists and belongs to task and project
     var stepEdit = stepJPA.findById(stepId).orElse(null);
     if (stepEdit == null || !stepEdit.getTask().getId().equals(taskId)
-        || !stepEdit.getTask().getProject().getId().equals(projectId)) {
+      || !stepEdit.getTask().getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
@@ -105,7 +106,7 @@ public class StepService {
     }
 
     if (observation != null) {
-
+      // FIXME #topmeme2020
       if (observation.length() < 0 || observation.length() >= 250) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
       }
@@ -113,7 +114,7 @@ public class StepService {
       stepEdit.setObservation(observation);
     }
 
-    stepEdit.setUpdatedBy(accountService.getAccount(accountId));
+    stepEdit.setUpdatedBy(projectMeta.getAccount());
 
     return stepJPA.save(stepEdit);
   }
@@ -124,7 +125,7 @@ public class StepService {
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
@@ -133,7 +134,10 @@ public class StepService {
 
     var account = accountService.getAccount(accountId);
 
-    step.setCreatedBy(account).setUpdatedBy(account).setTask(task);
+    step
+      .setCreatedBy(projectMeta.getAccount())
+      .setUpdatedBy(projectMeta.getAccount())
+      .setTask(task);
 
     return stepJPA.save(step);
   }
@@ -144,7 +148,7 @@ public class StepService {
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
@@ -154,8 +158,8 @@ public class StepService {
     var account = accountService.getAccount(accountId);
 
     Step step = new Step();
-    step.setCreatedBy(account);
-    step.setUpdatedBy(account);
+    step.setCreatedBy(projectMeta.getAccount());
+    step.setUpdatedBy(projectMeta.getAccount());
     step.setTask(task);
     step.setDescription(description);
 
@@ -185,7 +189,7 @@ public class StepService {
     // step exists and belongs to task and project
     var step = stepJPA.findById(stepId).orElse(null);
     if (step == null || !step.getTask().getId().equals(taskId)
-        || !step.getTask().getProject().getId().equals(projectId)) {
+      || !step.getTask().getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
@@ -198,14 +202,14 @@ public class StepService {
     var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
 
     if (projectMeta == null
-        || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
 
     // step exists and belongs to task and project
     var step = stepJPA.findById(stepId).orElse(null);
     if (step == null || !step.getTask().getId().equals(taskId)
-        || !step.getTask().getProject().getId().equals(projectId)) {
+      || !step.getTask().getProject().getId().equals(projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
