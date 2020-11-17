@@ -10,7 +10,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -33,9 +32,9 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
   public Authentication attemptAuthentication(HttpServletRequest request,
                                               HttpServletResponse response) {
     // get account from json response
-    Credentials.Impl credentials;
+    Credentials credentials;
     try {
-      credentials = new ObjectMapper().readValue(request.getInputStream(), Credentials.Impl.class);
+      credentials = new ObjectMapper().readValue(request.getInputStream(), Credentials.class);
     } catch (IOException exception) {
       throw new UnknownError(exception.getLocalizedMessage());
     }
@@ -62,7 +61,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
   protected void successfulAuthentication(HttpServletRequest request,
                                           HttpServletResponse response,
                                           FilterChain chain,
-                                          Authentication auth) throws IOException, ServletException {
+                                          Authentication auth) {
     var token = JWTUtils.create(
       (Long) auth.getPrincipal(),
       jwtConfig.getExpiration(),

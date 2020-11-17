@@ -7,6 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.IOException;
 
@@ -21,8 +22,14 @@ public class VerificationController {
 
   @GetMapping()
   public String verify(@RequestParam(required = false) String token,
-                       Model model) throws IOException {
+                       Model model) {
     return verificationService.verify(token, model);
+  }
+
+  @GetMapping("/re-send")
+  @ResponseBody
+  public void reSend(@RequestParam String email) throws IOException {
+    verificationService.reSend(email);
   }
 
 }

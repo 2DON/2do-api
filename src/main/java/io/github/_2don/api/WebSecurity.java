@@ -39,7 +39,7 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
       // authorize requests that don't need auth
       .authorizeRequests()
       .antMatchers(HttpMethod.POST, "/accounts/sign-up").permitAll()
-      .antMatchers(HttpMethod.GET, "/auth/sign-up/verify").permitAll()
+      .antMatchers(HttpMethod.GET, "/auth/sign-up/verify/**").permitAll()
       .antMatchers(HttpMethod.GET, "/accounts/exists/{email}").permitAll()
       // set all other requests for authenticated users only
       .anyRequest().authenticated().and()

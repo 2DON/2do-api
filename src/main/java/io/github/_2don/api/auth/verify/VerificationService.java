@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class VerificationService {
@@ -65,7 +66,7 @@ public class VerificationService {
   }
 
   private void assertCanSendNewMail(@NonNull Timestamp verificationSentAt) throws ResponseStatusException {
-    if (verificationSentAt.toInstant().plusSeconds(MIN_EXPIRATION).toEpochMilli() >= Instant.now().toEpochMilli()) {
+    if (verificationSentAt.toInstant().toEpochMilli() + TimeUnit.MINUTES.toMillis(MIN_EXPIRATION) >= Instant.now().toEpochMilli()) {
       throw new ResponseStatusException(HttpStatus.LOCKED);
     }
   }
@@ -107,6 +108,21 @@ public class VerificationService {
       .addAttribute("account_email", account.getEmail());
 
     return "verification-success";
+  }
+
+  public void reSend(@NonNull String email) throws IOException {
+    var account = accountJPA.findByEmail(email)
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+    if (account.isVerified()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    }
+
+    assertCanSendNewMail(account.getVerificationSentAt());
+
+    account.setVerificationSentAt(new Timestamp(System.currentTimeMillis()));
+    sendMail(account);
+    accountJPA.save(account);
   }
 
 }
