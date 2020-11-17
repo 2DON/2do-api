@@ -45,8 +45,7 @@ public class AccountService {
                      String name,
                      String options) throws IOException, ResponseStatusException {
     if (!Patterns.EMAIL.matches(email) || email.length() > 45
-      || password.length() < 8 || password.getBytes().length > 72
-      || (name != null && name.length() >= 1 && name.length() <= 45)) {
+      || password.length() < 8 || password.getBytes().length > 72) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
     }
 
@@ -57,9 +56,18 @@ public class AccountService {
     var account = new Account()
       .setEmail(email)
       .setPassword(bcrypt.encode(password))
-      .setName(name == null ? email : name)
       .setOptions(options)
       .setVerificationSentAt(new Timestamp(System.currentTimeMillis()));
+
+    if (name != null) {
+      if (name.length() >= 1 && name.length() <= 45) {
+        account.setName(name);
+      } else {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      account.setName(email);
+    }
 
     account = accountJPA.save(account);
     verificationService.sendMail(account);
