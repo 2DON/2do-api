@@ -51,6 +51,7 @@ public class AccountController {
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @RequestPart(name = "password") String password,
                       HttpServletResponse response) throws ResponseStatusException {
+    // FIXME how to delete account
     accountService.delete(accountId, password);
     response.addHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
   }
@@ -61,7 +62,7 @@ public class AccountController {
   }
 
   // TODO -- test only
-  @PostMapping("/me/mock-premium")
+  @GetMapping("/me/mock-premium")
   @ResponseStatus(HttpStatus.OK)
   public void premium(@AuthenticationPrincipal Long accountId) {
     accountService.obtainPremium(accountId);
