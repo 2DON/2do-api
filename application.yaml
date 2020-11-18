@@ -19,7 +19,6 @@ spring:
 server:
   host: <host>
 
-# TODO fix structure
 auth:
   secret: <secret>
   token:

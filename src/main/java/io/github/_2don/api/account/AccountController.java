@@ -42,7 +42,7 @@ public class AccountController {
 
   @PutMapping("/me/avatar")
   public Account editAvatar(@AuthenticationPrincipal Long accountId,
-                            @RequestPart(name = "avatar") MultipartFile avatar) throws ResponseStatusException {
+                            @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws ResponseStatusException {
     return accountService.updateAvatar(accountId, avatar);
   }
 
