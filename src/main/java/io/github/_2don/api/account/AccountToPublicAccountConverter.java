@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AccountToPublicAccountConverter extends StdConverter<Account, PublicAccount> {
+
   @Override
   public PublicAccount convert(Account account) {
     return PublicAccount.from(account);
   }
+
 }

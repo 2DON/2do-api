@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
@@ -19,15 +20,22 @@ public class AccountController {
   private JWTConfig jwtConfig;
   @Autowired
   private AccountService accountService;
+  @Autowired
+  private AccountJPA accountJPA;
 
   @GetMapping("/exists/{email}")
   public boolean exists(@PathVariable String email) {
-    return accountService.exists(email);
+    return accountJPA.existsByEmail(email);
   }
 
   @GetMapping("/me")
   public ResponseEntity<Account> info(@AuthenticationPrincipal Long accountId) {
-    return ResponseEntity.of(accountService.getAccount(accountId));
+    return ResponseEntity.of(accountJPA.findById(accountId));
+  }
+
+  @GetMapping
+  public List<PublicAccount> list(@RequestParam List<Long> ids) {
+    return accountJPA.findAllPublicByIdIn(ids);
   }
 
   @PatchMapping("/me")
@@ -56,15 +64,11 @@ public class AccountController {
     response.addHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
   }
 
-  @GetMapping("/{accountId}")
-  public ResponseEntity<PublicAccount> show(@PathVariable Long accountId) {
-    return ResponseEntity.of(accountService.getPublicAccount(accountId));
-  }
-
   // TODO -- test only
   @GetMapping("/me/mock-premium")
   @ResponseStatus(HttpStatus.OK)
   public void premium(@AuthenticationPrincipal Long accountId) {
     accountService.obtainPremium(accountId);
   }
+
 }

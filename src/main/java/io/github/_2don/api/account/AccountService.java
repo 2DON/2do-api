@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.Optional;
 
 @Service
 public class AccountService {
@@ -182,18 +181,6 @@ public class AccountService {
 
     account.setDeleteRequest(Date.valueOf(LocalDate.now().plusMonths(1)));
     accountJPA.save(account);
-  }
-
-  public Optional<Account> getAccount(@NonNull Long accountId) {
-    return accountJPA.findById(accountId);
-  }
-
-  public Optional<PublicAccount> getPublicAccount(@NonNull Long accountId) {
-    return accountJPA.findPublicById(accountId);
-  }
-
-  public boolean exists(@NonNull String email) {
-    return Patterns.EMAIL.matches(email) && accountJPA.existsByEmail(email);
   }
 
   /**
