@@ -1,5 +1,3 @@
-
-
 package io.github._2don.api.task;
 
 import com.fasterxml.jackson.annotation.*;
@@ -10,7 +8,6 @@ import io.github._2don.api.account.AccountToPublicAccountConverter;
 import io.github._2don.api.project.Project;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -22,7 +19,6 @@ import java.sql.Timestamp;
 @Data
 @Entity
 @NoArgsConstructor
-@Accessors(chain = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Task {
 
@@ -86,7 +82,7 @@ public class Task {
   private Account updatedBy;
 
   public Task(Project project, @NotNull @Size(min = 1, max = 80) String description,
-      Account assignedTo) {
+              Account assignedTo) {
     this.project = project;
     this.description = description;
     this.assignedTo = assignedTo;

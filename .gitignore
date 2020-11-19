@@ -33,5 +33,4 @@ out/
 ### VS Code ###
 bin/
 
-lombok.config
 application-local.yaml

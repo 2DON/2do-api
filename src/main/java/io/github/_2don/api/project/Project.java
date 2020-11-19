@@ -7,7 +7,6 @@ import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountToPublicAccountConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -18,7 +17,6 @@ import java.sql.Timestamp;
 @Data
 @Entity
 @NoArgsConstructor
-@Accessors(chain = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Project {
 
@@ -72,4 +70,5 @@ public class Project {
   public Project(@NotBlank String description) {
     this.description = description;
   }
+
 }

@@ -6,18 +6,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.sql.Date;
 import java.sql.Timestamp;
 
 @Data
 @Entity
 @NoArgsConstructor
-@Accessors(chain = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Account {
 
@@ -63,12 +64,13 @@ public class Account {
   @JsonProperty(access = Access.READ_ONLY)
   private Timestamp updatedAt;
 
-  public boolean isVerified() {
-    return this.verificationSentAt == null;
-  }
-
   public Account(String email, String password) {
     this.email = email;
     this.password = password;
   }
+
+  public boolean isVerified() {
+    return this.verificationSentAt == null;
+  }
+
 }

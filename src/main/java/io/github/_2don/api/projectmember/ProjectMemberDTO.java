@@ -9,7 +9,6 @@ import io.github._2don.api.account.AccountToPublicAccountConverter;
 import io.github._2don.api.team.Team;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 import java.sql.Timestamp;
 
@@ -50,7 +49,6 @@ public interface ProjectMemberDTO {
 
   @Data
   @AllArgsConstructor
-  @Accessors(chain = true)
   class Impl implements ProjectMemberDTO {
     private Account account;
     private Team team;

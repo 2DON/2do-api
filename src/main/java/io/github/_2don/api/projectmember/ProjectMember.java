@@ -5,7 +5,6 @@ import io.github._2don.api.project.Project;
 import io.github._2don.api.team.Team;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -16,7 +15,6 @@ import java.sql.Timestamp;
 @Data
 @Entity
 @NoArgsConstructor
-@Accessors(chain = true)
 @IdClass(ProjectMemberId.class)
 public class ProjectMember {
 
