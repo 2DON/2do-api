@@ -7,11 +7,11 @@ import io.github._2don.api.project.Project;
 import io.github._2don.api.team.TeamJPA;
 import io.github._2don.api.team.TeamService;
 import io.github._2don.api.teammember.TeamMemberService;
+import io.github._2don.api.utils.Status;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,49 +44,45 @@ public class ProjectMemberService {
     var owner = getOwner(projectId);
     if (owner.isPresent() && !owner.get().getPremium()
       && projectMemberJPA.countByProjectId(projectId) >= NON_PREMIUM_MEMBER_LIMIT) {
-      throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
+      throw Status.UPGRADE_REQUIRED.get();
     }
   }
 
   public void assertProjectLimit(@NonNull Long accountId) {
-    assertProjectLimit(accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND)));
+    assertProjectLimit(accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND));
   }
 
   public void assertProjectLimit(@NonNull Account account) {
     if (!account.getPremium() && projectMemberJPA.countByAccountIdAndPermissions(account.getId(),
       ProjectMemberPermissions.OWNER) >= NON_PREMIUM_PROJECT_LIMIT) {
-      throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
+      throw Status.UPGRADE_REQUIRED.get();
     }
   }
 
   public void assertParticipationLimit(@NonNull Long accountId) {
-    var account = accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
 
     if (!account.getPremium()
       && projectMemberJPA.countByAccountId(accountId) >= NON_PREMIUM_PARTICIPATION_LIMIT) {
-      throw new ResponseStatusException(HttpStatus.UPGRADE_REQUIRED);
+      throw Status.UPGRADE_REQUIRED.get();
     }
   }
 
   public void assertIsMember(@NonNull Long accountId, @NonNull Long projectId) {
     if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
   }
 
   @NonNull
   public List<ProjectMemberDTO> list(@NonNull Long accountId, @NonNull Long projectId) {
     assertIsMember(accountId, projectId);
-
     return projectMemberJPA.findAllByProjectId(projectId);
   }
 
   @NonNull
   private ProjectMember getMeta(Long accountId, Long projectId) {
-    return projectMemberJPA.findByAccountIdAndProjectId(accountId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    return projectMemberJPA.findByAccountIdAndProjectId(accountId, projectId).orElseThrow(Status.UNAUTHORIZED);
   }
 
   @NonNull
@@ -98,15 +94,18 @@ public class ProjectMemberService {
   }
 
   @NonNull
-  public ProjectMemberDTO add(@NonNull Long loggedId, @NonNull Long projectId,
-                              @NonNull Long accountId, Long teamId, @NonNull ProjectMemberPermissions permissions) {
+  public ProjectMemberDTO add(@NonNull Long loggedId,
+                              @NonNull Long projectId,
+                              @NonNull Long accountId,
+                              Long teamId, @NonNull
+                                ProjectMemberPermissions permissions) {
 
     assertMemberLimit(projectId);
     accountService.assertExists(accountId, HttpStatus.NOT_FOUND);
     assertParticipationLimit(accountId);
 
     if (projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT);
+      throw Status.CONFLICT.get();
     }
 
     var loggedMeta = getMeta(loggedId, projectId);
@@ -115,7 +114,7 @@ public class ProjectMemberService {
     if (loggedPerm.compareTo(ProjectMemberPermissions.MAN_MEMBERS) < 0
       || loggedPerm.compareTo(permissions) < 0) {
       // not a member_manager+ or trying to apply permissions higher then himself
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     var projectMember = new ProjectMember().setAccountId(accountId).setProjectId(projectId)
@@ -144,7 +143,7 @@ public class ProjectMemberService {
       if (loggedPerm.compareTo(ProjectMemberPermissions.MAN_MEMBERS) < 0
         || loggedPerm.compareTo(accountPerm) < 0 || loggedPerm.compareTo(permissions) < 0) {
         // not a member_manager+ or trying to apply permissions higher then himself
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        throw Status.UNAUTHORIZED.get();
       }
       accountMeta.setPermissions(permissions);
     }
@@ -172,11 +171,11 @@ public class ProjectMemberService {
       if (loggedPerm.compareTo(ProjectMemberPermissions.MAN_MEMBERS) < 0
         || loggedPerm.compareTo(accountPerm) < 0) {
         // not a member_manager+ or trying to apply permissions higher then himself
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        throw Status.UNAUTHORIZED.get();
       }
     } else if (accountPerm == ProjectMemberPermissions.OWNER) {
       // cannot remove the owner, the user needs to transfer ownership first
-      throw new ResponseStatusException(HttpStatus.LOCKED);
+      throw Status.LOCKED.get();
     }
 
     projectMemberJPA.delete(accountMeta);
@@ -184,13 +183,13 @@ public class ProjectMemberService {
 
   public void transferOwnership(Long ownerId, Long projectId, Long newOwnerId) {
     if (ownerId.equals(newOwnerId)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+      throw Status.BAD_REQUEST.get();
     }
 
     var owner = projectMemberJPA
       .findByAccountIdAndProjectIdAndPermissions(ownerId, projectId,
         ProjectMemberPermissions.OWNER)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+      .orElseThrow(Status.UNAUTHORIZED);
 
     var newOwner = getMeta(newOwnerId, projectId);
 

@@ -65,7 +65,7 @@ public class ProjectService {
     // project is archived and the request don't unarchive it
     // TODO archiving deserves his own route?
     if (projectEdit.getArchived() && (project.getArchived() == null || !project.getArchived())) {
-      throw new ResponseStatusException(HttpStatus.LOCKED);
+      throw Status.LOCKED.get();
     }
 
     if (project.getArchived() != null) {
@@ -74,7 +74,7 @@ public class ProjectService {
 
     if (project.getDescription() != null) {
       if (project.getDescription().length() == 0) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw Status.BAD_REQUEST.get();
       }
       projectEdit.setDescription(project.getDescription());
     }
@@ -95,20 +95,21 @@ public class ProjectService {
       }
     }
 
-    projectEdit.setUpdatedBy(projectMember.getAccount());
+    projectEdit.setUpdatedBy(projectMeta.getAccount());
 
     return projectJPA.save(projectEdit);
   }
 
-  public void delete(Long accountId, Long projectId) {
-
-    ProjectMember projectMember =
-      projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+  public void delete(Long accountId,
+                     Long projectId) {
+    var projectMember = projectMemberJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElseThrow(Status.NOT_FOUND);
 
     if (projectMember == null
       || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
       // not enough permission
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     // TODO delete project + members + tasks + steps

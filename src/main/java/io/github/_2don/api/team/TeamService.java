@@ -1,14 +1,14 @@
 package io.github._2don.api.team;
 
+import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.teammember.TeamMember;
 import io.github._2don.api.teammember.TeamMemberService;
 import io.github._2don.api.utils.ImageEncoder;
+import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,6 +23,8 @@ public class TeamService {
   private AccountService accountService;
   @Autowired
   private TeamMemberService teamMemberService;
+  @Autowired
+  private AccountJPA accountJPA;
 
   public List<Team> getTeams(Long accountId) {
     return teamMemberService.getTeamMembers(accountId).stream().map(TeamMember::getTeam)
@@ -30,22 +32,18 @@ public class TeamService {
   }
 
   public Team getTeam(Long accountId, Long teamId) {
-
     if (!teamMemberService.exist(accountId, teamId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
-    return teamJPA.findById(teamId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+    return teamJPA.findById(teamId).orElseThrow(Status.UNAUTHORIZED);
   }
 
   public Team add(Long accountId, Team team) {
-
-    var account = accountService.getAccount(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
 
     if (!account.getPremium()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     team.setCreatedBy(account);
@@ -58,21 +56,22 @@ public class TeamService {
     return teamCreated;
   }
 
-  public Team update(Long accountId, Long teamId, String name, String removeAvatar,
+  public Team update(Long accountId,
+                     Long teamId,
+                     String name,
+                     String removeAvatar,
                      MultipartFile avatar) {
-
     var teamMember = teamMemberService.getTeamMember(accountId, teamId);
 
     if (!teamMember.getOperator()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
-    var team = teamJPA.findById(teamId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var team = teamJPA.findById(teamId).orElseThrow(Status.NOT_FOUND);
 
     if (name != null) {
       if (name.length() < 1 || name.length() > 45) {
-        throw new ResponseStatusException((HttpStatus.BAD_REQUEST));
+        throw Status.BAD_REQUEST.get();
       }
 
       team.setName(name);
@@ -80,13 +79,13 @@ public class TeamService {
 
     if (avatar != null) {
       if (!ImageEncoder.supports(avatar.getContentType())) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw Status.BAD_REQUEST.get();
       }
 
       try {
         team.setAvatarUrl(ImageEncoder.encodeToString(avatar.getBytes()));
       } catch (IOException e) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw Status.BAD_REQUEST.get();
       }
 
     } else if (removeAvatar != null) {
@@ -98,11 +97,10 @@ public class TeamService {
   }
 
   public void delete(Long accountId, Long teamId) {
-
     var teamMember = teamMemberService.getTeamMember(accountId, teamId);
 
     if (!teamMember.getOperator()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     teamMemberService.delete(teamId);

@@ -6,10 +6,10 @@ import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.jwt.JWTUtils;
 import io.github._2don.api.mail.EmailService;
 import io.github._2don.api.utils.Resource;
+import io.github._2don.api.utils.Status;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.server.ResponseStatusException;
@@ -67,7 +67,7 @@ public class VerificationService {
 
   public void assertCanSendNewMail(@NonNull Timestamp verificationSentAt) throws ResponseStatusException {
     if (verificationSentAt.toInstant().toEpochMilli() + TimeUnit.MINUTES.toMillis(MIN_EXPIRATION) >= Instant.now().toEpochMilli()) {
-      throw new ResponseStatusException(HttpStatus.LOCKED);
+      throw Status.LOCKED.get();
     }
   }
 
@@ -81,7 +81,7 @@ public class VerificationService {
         SERVER_HOST, SERVER_PORT, token));
 
     if (!emailService.send(account.getEmail(), SUBJECT, content)) {
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+      throw Status.INTERNAL_SERVER_ERROR.get();
     }
   }
 
@@ -112,10 +112,10 @@ public class VerificationService {
 
   public void reSend(@NonNull String email) throws IOException, ResponseStatusException {
     var account = accountJPA.findByEmail(email)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(Status.NOT_FOUND);
 
     if (account.isVerified()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     assertCanSendNewMail(account.getVerificationSentAt());

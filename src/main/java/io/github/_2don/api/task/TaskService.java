@@ -4,11 +4,10 @@ import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.projectmember.ProjectMemberPermissions;
 import io.github._2don.api.projectmember.ProjectMemberService;
+import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -30,7 +29,7 @@ public class TaskService {
 
     if (projectMeta == null
       || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     task
@@ -47,7 +46,7 @@ public class TaskService {
 
     if (projectMeta == null
       || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     // FIXME assigned to is supposed to be OPTIONAL NOT REQUIRED
@@ -69,11 +68,11 @@ public class TaskService {
 
     if (projectMeta == null
       || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     var taskEdit = taskJPA.findByIdAndProjectId(taskId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(Status.NOT_FOUND);
 
     if (task.getOrdinal() != null) {
       taskEdit.setOrdinal(task.getOrdinal());
@@ -81,7 +80,7 @@ public class TaskService {
 
     if (task.getDescription() != null) {
       if (task.getDescription().length() == 0 || task.getDescription().length() >= 80) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw Status.BAD_REQUEST.get();
       }
       taskEdit.setDescription(task.getDescription());
     }
@@ -114,11 +113,11 @@ public class TaskService {
 
     if (projectMeta == null
       || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     var taskEdit = taskJPA.findByIdAndProjectId(taskId, projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+      .orElseThrow(Status.NOT_FOUND);
 
     if (ordinal != null) {
       taskEdit.setOrdinal(ordinal);
@@ -126,7 +125,7 @@ public class TaskService {
 
     if (description != null) {
       if (description.length() == 0 || description.length() >= 80) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw Status.BAD_REQUEST.get();
       }
       taskEdit.setDescription(description);
     }
@@ -162,12 +161,12 @@ public class TaskService {
 
     if (projectMeta == null
       || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     var task = taskJPA.findById(taskId).orElse(null);
     if (task == null || !task.getProject().getId().equals(projectId)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+      throw Status.NOT_FOUND.get();
     }
 
     taskJPA.delete(task);
@@ -177,13 +176,13 @@ public class TaskService {
 
     // account is member of project
     if (!projectMemberService.exist(accountId, projectId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     // task exists and belongs to project
     var task = taskJPA.findById(taskId).orElse(null);
     if (task == null || !task.getProject().getId().equals(projectId)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+      throw Status.NOT_FOUND.get();
     }
 
     return taskJPA.getOne(taskId);
@@ -193,18 +192,17 @@ public class TaskService {
 
     // account is member of project
     if (!projectMemberService.exist(accountId, projectId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UNAUTHORIZED.get();
     }
 
     return taskJPA.findAllByProjectId(projectId, Sort.by(Sort.Direction.ASC, "ordinal"));
   }
 
   public Task getTask(Long projectId, Long taskId) {
-
     // task exists and belongs to project
     var task = taskJPA.findById(taskId).orElse(null);
     if (task == null || !task.getProject().getId().equals(projectId)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+      throw Status.NOT_FOUND.get();
     }
 
     return taskJPA.getOne(taskId);

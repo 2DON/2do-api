@@ -1,9 +1,7 @@
 package io.github._2don.api.utils;
 
 import io.github._2don.api.Application;
-import org.springframework.http.HttpStatus;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -23,7 +21,7 @@ public class Resource {
     } catch (IOException ignored) {
     }
 
-    return string.orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR));
+    return string.orElseThrow(Status.INTERNAL_SERVER_ERROR);
   }
 
 }
