@@ -26,7 +26,7 @@ public class ProjectMemberController {
                                 @RequestParam(name = "teamId", required = false) Long teamId,
                                 @RequestParam(name = "permissions") String permissions) {
 
-    var projectMemberPermissions = ProjectMemberPermissions.valueOf(permissions);
+    var projectMemberPermissions = ProjectMemberPermission.valueOf(permissions);
 
     if (projectMemberPermissions == null) {
       throw Status.BAD_REQUEST.get();
@@ -42,7 +42,7 @@ public class ProjectMemberController {
                                @RequestParam(name = "teamId", required = false) Long teamId,
                                @RequestParam(name = "permissions") String permissions) {
 
-    var projectMemberPermissions = ProjectMemberPermissions.valueOf(permissions);
+    var projectMemberPermissions = ProjectMemberPermission.valueOf(permissions);
 
     if (projectMemberPermissions == null) {
       throw Status.BAD_REQUEST.get();

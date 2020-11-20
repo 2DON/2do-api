@@ -1,6 +1,6 @@
 package io.github._2don.api.projectmember;
 
-public enum ProjectMemberPermissions {
+public enum ProjectMemberPermission {
   /**
    * Can see the project, tasks and steps
    */

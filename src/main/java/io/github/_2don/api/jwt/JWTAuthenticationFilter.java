@@ -18,13 +18,13 @@ import java.util.Collections;
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
   private final JWTConfig jwtConfig;
-  private final AuthenticationManager authman;
+  private final AuthenticationManager authenticationManager;
 
   public JWTAuthenticationFilter(JWTConfig jwtConfig,
-                                 AuthenticationManager authman,
+                                 AuthenticationManager authenticationManager,
                                  String filterProcessesUrl) {
     this.jwtConfig = jwtConfig;
-    this.authman = authman;
+    this.authenticationManager = authenticationManager;
     setFilterProcessesUrl(filterProcessesUrl);
   }
 
@@ -46,7 +46,7 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     // use the credentials to attempt authentication
     try {
-      return authman.authenticate(new UsernamePasswordAuthenticationToken(
+      return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
         credentials.getEmail(),
         credentials.getPassword(),
         Collections.emptyList()));

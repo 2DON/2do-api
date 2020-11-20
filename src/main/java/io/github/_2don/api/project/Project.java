@@ -1,10 +1,7 @@
 package io.github._2don.api.project;
 
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountToPublicAccountConverter;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,13 +19,11 @@ public class Project {
 
   @Id
   @GeneratedValue
-  @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
   @Column(nullable = false)
   private Integer ordinal = Integer.MAX_VALUE;
 
-  @NotBlank
   @Column(columnDefinition = "TEXT", nullable = false)
   private String description;
 
@@ -43,28 +38,18 @@ public class Project {
 
   @CreationTimestamp
   @Column(nullable = false)
-  @JsonProperty(access = Access.READ_ONLY)
   private Timestamp createdAt;
 
   @ManyToOne
-  @JsonProperty(access = Access.READ_ONLY)
-  @JsonIdentityReference(alwaysAsId = true)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   private Account createdBy;
 
   @UpdateTimestamp
   @Column(nullable = false)
-  @JsonProperty(access = Access.READ_ONLY)
   private Timestamp updatedAt;
 
   @ManyToOne
-  @JsonProperty(access = Access.READ_ONLY)
-  @JsonIdentityReference(alwaysAsId = true)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   private Account updatedBy;
 
   public Project(@NotBlank String description) {

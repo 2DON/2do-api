@@ -5,7 +5,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -26,21 +25,30 @@ public class ProjectController {
   public ProjectDTO store(@AuthenticationPrincipal Long accountId,
                           @RequestPart(name = "description") String description,
                           @RequestPart(name = "observation", required = false) String observation,
-                          @RequestPart(name = "status", required = false) Integer ordinal) {
+                          @RequestPart(name = "ordinal", required = false) Integer ordinal) {
     return projectService.create(accountId, description, observation, ordinal);
   }
 
   @GetMapping("/{projectId}")
-  public Project show(@AuthenticationPrincipal Long accountId,
-                      @PathVariable Long projectId) {
-    return projectService.getProject(accountId, projectId);
+  public ProjectDTO show(@AuthenticationPrincipal Long accountId,
+                         @PathVariable Long projectId) {
+    return projectService.find(accountId, projectId);
   }
 
-  @PatchMapping("/{oldProjectId}")
-  public Project edit(@AuthenticationPrincipal Long accountId,
-                      @PathVariable Long oldProjectId,
-                      @Valid @RequestBody Project newProject) {
-    return projectService.update(accountId, oldProjectId, newProject);
+  @PatchMapping("/{projectId}")
+  public ProjectDTO update(@AuthenticationPrincipal Long accountId,
+                           @PathVariable Long projectId,
+                           @RequestPart(name = "description", required = false) String description,
+                           @RequestPart(name = "observation", required = false) String observation,
+                           @RequestPart(name = "ordinal", required = false) Integer ordinal,
+                           @RequestPart(name = "options", required = false) String options) {
+    return projectService.update(accountId, projectId, description, observation, ordinal, options);
+  }
+
+  @GetMapping("/{projectId}/toggle-archiving")
+  public ProjectDTO toggleArchiving(@AuthenticationPrincipal Long accountId,
+                                    @PathVariable Long projectId) {
+    return projectService.toggleArchiving(accountId, projectId);
   }
 
   @DeleteMapping("/{projectId}")

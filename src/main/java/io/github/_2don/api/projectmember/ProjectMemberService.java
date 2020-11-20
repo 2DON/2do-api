@@ -53,8 +53,8 @@ public class ProjectMemberService {
   }
 
   public void assertProjectLimit(@NonNull Account account) {
-    if (!account.getPremium() && projectMemberJPA.countByAccountIdAndPermissions(account.getId(),
-      ProjectMemberPermissions.OWNER) >= NON_PREMIUM_PROJECT_LIMIT) {
+    if (!account.getPremium() && projectMemberJPA.countByAccountIdAndPermission(account.getId(),
+      ProjectMemberPermission.OWNER) >= NON_PREMIUM_PROJECT_LIMIT) {
       throw Status.UPGRADE_REQUIRED.get();
     }
   }
@@ -74,6 +74,20 @@ public class ProjectMemberService {
     }
   }
 
+  public ProjectMember findIfHavePermission(@NonNull Long accountId,
+                                            @NonNull Long projectId,
+                                            @NonNull ProjectMemberPermission permission) {
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.NOT_FOUND);
+
+    if (projectMeta.canNot(permission)) {
+      throw Status.UNAUTHORIZED.get();
+    }
+
+    return projectMeta;
+  }
+
   @NonNull
   public List<ProjectMemberDTO> list(@NonNull Long accountId, @NonNull Long projectId) {
     assertIsMember(accountId, projectId);
@@ -88,7 +102,7 @@ public class ProjectMemberService {
   @NonNull
   private Optional<Account> getOwner(@NonNull Long projectId) {
     var meta =
-      projectMemberJPA.findByProjectIdAndPermissions(projectId, ProjectMemberPermissions.OWNER);
+      projectMemberJPA.findByProjectIdAndPermission(projectId, ProjectMemberPermission.OWNER);
 
     return meta.map(ProjectMember::getAccount);
   }
@@ -98,7 +112,7 @@ public class ProjectMemberService {
                               @NonNull Long projectId,
                               @NonNull Long accountId,
                               Long teamId, @NonNull
-                                ProjectMemberPermissions permissions) {
+                                ProjectMemberPermission permissions) {
 
     assertMemberLimit(projectId);
     accountService.assertExists(accountId, HttpStatus.NOT_FOUND);
@@ -109,16 +123,16 @@ public class ProjectMemberService {
     }
 
     var loggedMeta = getMeta(loggedId, projectId);
-    var loggedPerm = loggedMeta.getPermissions();
+    var loggedPerm = loggedMeta.getPermission();
 
-    if (loggedPerm.compareTo(ProjectMemberPermissions.MAN_MEMBERS) < 0
+    if (loggedPerm.compareTo(ProjectMemberPermission.MAN_MEMBERS) < 0
       || loggedPerm.compareTo(permissions) < 0) {
       // not a member_manager+ or trying to apply permissions higher then himself
       throw Status.UNAUTHORIZED.get();
     }
 
     var projectMember = new ProjectMember().setAccountId(accountId).setProjectId(projectId)
-      .setPermissions(permissions).setCreatedBy(loggedMeta.getAccount())
+      .setPermission(permissions).setCreatedBy(loggedMeta.getAccount())
       .setUpdatedBy(loggedMeta.getAccount());
 
     if (teamId != null) {
@@ -132,20 +146,20 @@ public class ProjectMemberService {
 
   @NonNull
   public ProjectMemberDTO edit(@NonNull Long loggedId, @NonNull Long projectId,
-                               @NonNull Long accountId, Long teamId, ProjectMemberPermissions permissions) {
+                               @NonNull Long accountId, Long teamId, ProjectMemberPermission permissions) {
 
     var loggedMeta = getMeta(loggedId, projectId);
-    var loggedPerm = loggedMeta.getPermissions();
+    var loggedPerm = loggedMeta.getPermission();
     var accountMeta = getMeta(accountId, projectId);
-    var accountPerm = accountMeta.getPermissions();
+    var accountPerm = accountMeta.getPermission();
 
     if (permissions != null) {
-      if (loggedPerm.compareTo(ProjectMemberPermissions.MAN_MEMBERS) < 0
+      if (loggedPerm.compareTo(ProjectMemberPermission.MAN_MEMBERS) < 0
         || loggedPerm.compareTo(accountPerm) < 0 || loggedPerm.compareTo(permissions) < 0) {
         // not a member_manager+ or trying to apply permissions higher then himself
         throw Status.UNAUTHORIZED.get();
       }
-      accountMeta.setPermissions(permissions);
+      accountMeta.setPermission(permissions);
     }
 
     if (teamId != null) {
@@ -162,18 +176,18 @@ public class ProjectMemberService {
   public void delete(@NonNull Long loggedId, @NonNull Long projectId, @NonNull Long accountId) {
 
     var accountMeta = getMeta(accountId, projectId);
-    var accountPerm = accountMeta.getPermissions();
+    var accountPerm = accountMeta.getPermission();
 
     if (!loggedId.equals(accountId)) {
       var loggedMeta = getMeta(loggedId, projectId);
-      var loggedPerm = loggedMeta.getPermissions();
+      var loggedPerm = loggedMeta.getPermission();
 
-      if (loggedPerm.compareTo(ProjectMemberPermissions.MAN_MEMBERS) < 0
+      if (loggedPerm.compareTo(ProjectMemberPermission.MAN_MEMBERS) < 0
         || loggedPerm.compareTo(accountPerm) < 0) {
         // not a member_manager+ or trying to apply permissions higher then himself
         throw Status.UNAUTHORIZED.get();
       }
-    } else if (accountPerm == ProjectMemberPermissions.OWNER) {
+    } else if (accountPerm == ProjectMemberPermission.OWNER) {
       // cannot remove the owner, the user needs to transfer ownership first
       throw Status.LOCKED.get();
     }
@@ -187,48 +201,28 @@ public class ProjectMemberService {
     }
 
     var owner = projectMemberJPA
-      .findByAccountIdAndProjectIdAndPermissions(ownerId, projectId,
-        ProjectMemberPermissions.OWNER)
+      .findByAccountIdAndProjectIdAndPermission(ownerId, projectId,
+        ProjectMemberPermission.OWNER)
       .orElseThrow(Status.UNAUTHORIZED);
 
     var newOwner = getMeta(newOwnerId, projectId);
 
     assertProjectLimit(newOwner.getAccount());
 
-    owner.setPermissions(ProjectMemberPermissions.MAN_PROJECT).setUpdatedBy(owner.getAccount());
+    owner.setPermission(ProjectMemberPermission.MAN_PROJECT).setUpdatedBy(owner.getAccount());
 
-    newOwner.setPermissions(ProjectMemberPermissions.OWNER).setUpdatedBy(owner.getAccount());
+    newOwner.setPermission(ProjectMemberPermission.OWNER).setUpdatedBy(owner.getAccount());
 
     projectMemberJPA.save(owner);
     projectMemberJPA.save(newOwner);
   }
 
-  public List<ProjectMember> getAllProjectMembers(Long accountId) {
-    return projectMemberJPA.findAllByAccountId(accountId);
-  }
-
-  public Optional<ProjectMember> getProjectMember(Long accountId, Long projectId) {
-    return projectMemberJPA.findByAccountIdAndProjectId(accountId, projectId);
-  }
-
-  public boolean exist(Long accountId, Long projectId) {
-    return projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId);
-  }
-
-  public boolean exist(Project project) {
-    return projectMemberJPA.existsByAccountId(project.getCreatedBy().getId());
-  }
-
-  public ProjectMember add(ProjectMember projectMember) {
-    return projectMemberJPA.save(projectMember);
-  }
-
-  public ProjectMember add(Account account, Project project, ProjectMemberPermissions permission) {
+  public ProjectMember add(Account account, Project project, ProjectMemberPermission permission) {
 
     ProjectMember projectMember = new ProjectMember();
     projectMember.setAccount(account);
     projectMember.setProject(project);
-    projectMember.setPermissions(permission);
+    projectMember.setPermission(permission);
 
     return projectMemberJPA.save(projectMember);
   }

@@ -2,9 +2,7 @@ package io.github._2don.api.step;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountToPublicAccountConverter;
 import io.github._2don.api.task.Task;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,11 +25,11 @@ public class Step {
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
+  @JsonIdentityReference(alwaysAsId = true)
+  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @ManyToOne
   @JsonIgnore
-  @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(referencedColumnName = "id", nullable = false)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @JoinColumn(referencedColumnName = "id", insertable = false, updatable = false)
   private Task task;
 
   @Column(nullable = false)
@@ -43,7 +41,7 @@ public class Step {
   private String description;
 
   @Column(nullable = false)
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   private StepStatus status = StepStatus.IN_PROGRESS;
 
   @Column(length = 250)
@@ -57,8 +55,7 @@ public class Step {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
@@ -70,8 +67,7 @@ public class Step {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 

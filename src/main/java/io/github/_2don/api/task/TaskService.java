@@ -2,7 +2,8 @@ package io.github._2don.api.task;
 
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
-import io.github._2don.api.projectmember.ProjectMemberPermissions;
+import io.github._2don.api.projectmember.ProjectMemberJPA;
+import io.github._2don.api.projectmember.ProjectMemberPermission;
 import io.github._2don.api.projectmember.ProjectMemberService;
 import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +23,16 @@ public class TaskService {
   private ProjectMemberService projectMemberService;
   @Autowired
   private AccountJPA accountJPA;
+  @Autowired
+  private ProjectMemberJPA projectMemberJPA;
 
   public Task add(Long accountId, Task task, Long projectId) {
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -42,10 +46,11 @@ public class TaskService {
 
   public Task add(Long accountId, String description, Long projectId, Long assignedToId) {
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -64,10 +69,11 @@ public class TaskService {
 
   public Task update(Long accountId, Long projectId, Long taskId, Task task) {
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -109,10 +115,11 @@ public class TaskService {
                      String description, String status, String options, Long assignedToId) {
 
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -157,10 +164,11 @@ public class TaskService {
 
   public void delete(Long accountId, Long taskId, Long projectId) {
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -175,7 +183,7 @@ public class TaskService {
   public Task getTask(Long accountId, Long projectId, Long taskId) {
 
     // account is member of project
-    if (!projectMemberService.exist(accountId, projectId)) {
+    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -191,7 +199,7 @@ public class TaskService {
   public List<Task> getTasks(Long accountId, Long projectId) {
 
     // account is member of project
-    if (!projectMemberService.exist(accountId, projectId)) {
+    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw Status.UNAUTHORIZED.get();
     }
 

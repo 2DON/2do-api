@@ -1,9 +1,7 @@
 package io.github._2don.api.teammember;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountToPublicAccountConverter;
 import io.github._2don.api.team.Team;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,20 +20,19 @@ import java.sql.Timestamp;
 public class TeamMember {
 
   @Id
-  @ManyToOne
   @JsonIdentityReference(alwaysAsId = true)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JoinColumn(referencedColumnName = "id", nullable = false)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @ManyToOne
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JoinColumn(referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   private Account account;
 
   @Id
-  @ManyToOne
   @JsonIdentityReference(alwaysAsId = true)
-  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JoinColumn(referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @ManyToOne
+  @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+  @JoinColumn(referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   private Team team;
 
   @NotNull
@@ -48,10 +45,9 @@ public class TeamMember {
   private Timestamp createdAt;
 
   @ManyToOne
-  @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityReference(alwaysAsId = true)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
@@ -61,10 +57,9 @@ public class TeamMember {
   private Timestamp updatedAt;
 
   @ManyToOne
-  @JsonIdentityReference(alwaysAsId = true)
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
+  @JsonIdentityReference(alwaysAsId = true)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 

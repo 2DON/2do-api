@@ -4,7 +4,6 @@ import io.github._2don.api.account.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 
@@ -20,13 +19,13 @@ public class AuthController {
   public void signUp(@RequestPart(name = "email") String email,
                      @RequestPart(name = "password") String password,
                      @RequestPart(name = "name", required = false) String name,
-                     @RequestPart(name = "options", required = false) String options) throws IOException, ResponseStatusException {
+                     @RequestPart(name = "options", required = false) String options) throws IOException {
     accountService.create(email, password, name, options);
   }
 
   @PostMapping("/sign-up/fix-email")
   public void fixEmail(@RequestParam String email,
-                       @RequestPart(name = "new-email") String newEmail) throws IOException, ResponseStatusException {
+                       @RequestPart(name = "new-email") String newEmail) throws IOException {
     accountService.fixEmail(email, newEmail);
   }
 

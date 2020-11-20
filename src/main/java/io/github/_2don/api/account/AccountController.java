@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -24,33 +23,33 @@ public class AccountController {
   private AccountJPA accountJPA;
 
   @GetMapping("/exists/{email}")
-  public boolean exists(@PathVariable String email) {
+  public boolean existsByEmail(@PathVariable String email) {
     return accountJPA.existsByEmail(email);
   }
 
-  @GetMapping("/me")
-  public ResponseEntity<Account> info(@AuthenticationPrincipal Long accountId) {
-    return ResponseEntity.of(accountJPA.findById(accountId));
+  @GetMapping
+  public List<PublicAccount> findByIds(@RequestParam List<Long> ids) {
+    return accountJPA.findAllPublicByIdIn(ids);
   }
 
-  @GetMapping
-  public List<PublicAccount> list(@RequestParam List<Long> ids) {
-    return accountJPA.findAllPublicByIdIn(ids);
+  @GetMapping("/me")
+  public ResponseEntity<Account> me(@AuthenticationPrincipal Long accountId) {
+    return ResponseEntity.of(accountJPA.findById(accountId));
   }
 
   @PatchMapping("/me")
   @ResponseStatus(HttpStatus.OK)
-  public Account edit(@AuthenticationPrincipal Long accountId,
-                      @RequestPart(name = "email", required = false) String email,
-                      @RequestPart(name = "password", required = false) String password,
-                      @RequestPart(name = "name", required = false) String name,
-                      @RequestPart(name = "options", required = false) String options) throws ResponseStatusException {
+  public Account update(@AuthenticationPrincipal Long accountId,
+                        @RequestPart(name = "email", required = false) String email,
+                        @RequestPart(name = "password", required = false) String password,
+                        @RequestPart(name = "name", required = false) String name,
+                        @RequestPart(name = "options", required = false) String options) {
     return accountService.update(accountId, email, password, name, options);
   }
 
   @PutMapping("/me/avatar")
-  public Account editAvatar(@AuthenticationPrincipal Long accountId,
-                            @RequestPart(name = "avatar", required = false) MultipartFile avatar) throws ResponseStatusException {
+  public Account updateAvatar(@AuthenticationPrincipal Long accountId,
+                              @RequestPart(name = "avatar", required = false) MultipartFile avatar) {
     return accountService.updateAvatar(accountId, avatar);
   }
 
@@ -58,7 +57,7 @@ public class AccountController {
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
                       @RequestPart(name = "password") String password,
-                      HttpServletResponse response) throws ResponseStatusException {
+                      HttpServletResponse response) {
     // FIXME how to delete account
     accountService.delete(accountId, password);
     response.addHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());

@@ -3,7 +3,7 @@ package io.github._2don.api.step;
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
-import io.github._2don.api.projectmember.ProjectMemberPermissions;
+import io.github._2don.api.projectmember.ProjectMemberPermission;
 import io.github._2don.api.projectmember.ProjectMemberService;
 import io.github._2don.api.task.TaskService;
 import io.github._2don.api.utils.Status;
@@ -32,10 +32,11 @@ public class StepService {
   public Step edit(Long accountId, Long stepId, Long projectId, Long taskId, Step step) {
 
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -80,10 +81,11 @@ public class StepService {
                    String description, String observation, String status) {
 
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -127,10 +129,11 @@ public class StepService {
   public Step add(Long accountId, Step step, Long projectId, Long taskId) {
 
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -148,10 +151,11 @@ public class StepService {
   public Step add(Long accountId, String description, Long projectId, Long taskId) {
 
     // account is member of project and has permission
-    var projectMeta = projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var projectMeta = projectMemberJPA
+      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta == null
-      || projectMeta.getPermissions().compareTo(ProjectMemberPermissions.MAN_TASKS) < 0) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -171,7 +175,7 @@ public class StepService {
 
   public List<Step> getSteps(Long accountId, Long projectId, Long taskId) {
     // account is member of project
-    if (!projectMemberService.exist(accountId, projectId)) {
+    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -185,7 +189,7 @@ public class StepService {
 
   public Step getStep(Long accountId, Long stepId, Long projectId, Long taskId) {
     // account is member of project
-    if (!projectMemberService.exist(accountId, projectId)) {
+    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -206,7 +210,7 @@ public class StepService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.NOT_FOUND);
 
-    if (projectMeta.cannotAtLeast(ProjectMemberPermissions.MAN_TASKS)) {
+    if (projectMeta.canNot(ProjectMemberPermission.MAN_TASKS)) {
       throw Status.UNAUTHORIZED.get();
     }
 

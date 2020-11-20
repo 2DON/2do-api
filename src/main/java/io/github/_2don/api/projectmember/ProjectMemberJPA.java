@@ -1,8 +1,9 @@
 package io.github._2don.api.projectmember;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProjectMemberJPA extends JpaRepository<ProjectMember, ProjectMemberId> {
 
@@ -14,15 +15,18 @@ public interface ProjectMemberJPA extends JpaRepository<ProjectMember, ProjectMe
 
   Long countByAccountId(Long accountId);
 
-  Long countByAccountIdAndPermissions(Long projectId, ProjectMemberPermissions permissions);
+  Long countByAccountIdAndPermission(Long projectId, ProjectMemberPermission permission);
 
   Optional<ProjectMember> findByAccountIdAndProjectId(Long accountId, Long projectId);
 
-  Optional<ProjectMember> findByProjectIdAndPermissions(Long projectId, ProjectMemberPermissions permissions);
+  Optional<ProjectMember> findByProjectIdAndPermission(Long projectId, ProjectMemberPermission permission);
 
-  Optional<ProjectMember> findByAccountIdAndProjectIdAndPermissions(Long accountId, Long projectId, ProjectMemberPermissions permissions);
-
-  List<ProjectMember> findAllByAccountId(Long accountId);
+  Optional<ProjectMember> findByAccountIdAndProjectIdAndPermission(Long accountId, Long projectId, ProjectMemberPermission permission);
 
   List<ProjectMemberDTO> findAllByProjectId(Long projectId);
+
+  List<ProjectMember> findAllByAccountIdAndProjectArchived(Long accountId, boolean archived);
+
+  Optional<ProjectMember> findByAccountIdAndProjectIdAndProjectArchived(Long accountId, Long projectId, boolean archived);
+
 }

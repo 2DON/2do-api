@@ -34,7 +34,7 @@ public class AccountService {
    * @param status    status
    */
   public void assertExists(@NonNull Long accountId,
-                           @NonNull HttpStatus status) throws ResponseStatusException {
+                           @NonNull HttpStatus status) {
     if (!accountJPA.existsById(accountId)) {
       throw new ResponseStatusException(status);
     }
@@ -43,7 +43,7 @@ public class AccountService {
   public void create(@NonNull String email,
                      @NonNull String password,
                      String name,
-                     String options) throws IOException, ResponseStatusException {
+                     String options) throws IOException {
     if (!Patterns.EMAIL.matches(email) || email.length() > 45
       || password.length() < 8 || password.getBytes().length > 72) {
       throw Status.BAD_REQUEST.get();
@@ -136,7 +136,7 @@ public class AccountService {
   }
 
   public void fixEmail(@NonNull String email,
-                       @NonNull String newEmail) throws ResponseStatusException, IOException {
+                       @NonNull String newEmail) throws IOException {
     var account = accountJPA.findByEmail(email).orElseThrow(Status.NOT_FOUND);
 
     if (account.isVerified()) {
@@ -166,8 +166,8 @@ public class AccountService {
    * @param password  password
    */
   public void delete(@NonNull Long accountId,
-                     @NonNull String password) throws ResponseStatusException {
-    Account account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
+                     @NonNull String password) {
+    var account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
 
     if (!bcrypt.matches(password, account.getPassword())) {
       // wrong password
@@ -183,8 +183,8 @@ public class AccountService {
    *
    * @param accountId accountId
    */
-  public void obtainPremium(@NonNull Long accountId) throws ResponseStatusException {
-    Account account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
+  public void obtainPremium(@NonNull Long accountId) {
+    var account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
 
     account.setPremium(!account.getPremium());
 

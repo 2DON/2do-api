@@ -2,9 +2,7 @@ package io.github._2don.api.task;
 
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountToPublicAccountConverter;
 import io.github._2don.api.project.Project;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,10 +25,10 @@ public class Task {
   @JsonProperty(access = Access.READ_ONLY)
   private Long id;
 
-  @ManyToOne
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @ManyToOne
+  @JoinColumn(referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   private Project project;
 
   @Column(nullable = false)
@@ -42,17 +40,16 @@ public class Task {
   private String description;
 
   @Column(nullable = false)
-  @Enumerated(EnumType.ORDINAL)
+  @Enumerated(EnumType.STRING)
   private TaskStatus status = TaskStatus.IN_PROGRESS;
 
   @Column(columnDefinition = "TEXT")
   private String options;
 
-  @ManyToOne
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "assigned_to", referencedColumnName = "id")
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+  @ManyToOne
+  @JoinColumn(name = "assigned_to", referencedColumnName = "id", insertable = false, updatable = false)
   private Account assignedTo;
 
   @CreationTimestamp
@@ -63,8 +60,7 @@ public class Task {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
@@ -76,8 +72,7 @@ public class Task {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 

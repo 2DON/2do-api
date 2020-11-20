@@ -11,6 +11,6 @@ public interface AccountJPA extends JpaRepository<Account, Long> {
 
   Optional<Account> findByEmail(String email);
 
-  List<PublicAccount> findAllPublicByIdIn(Iterable<Long> id);
+  List<PublicAccount> findAllPublicByIdIn(Iterable<Long> ids);
 
 }
