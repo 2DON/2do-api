@@ -81,7 +81,7 @@ public class ProjectMemberService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.NOT_FOUND);
 
-    if (projectMeta.canNot(permission)) {
+    if (projectMeta.isNot(permission)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -101,10 +101,9 @@ public class ProjectMemberService {
 
   @NonNull
   private Optional<Account> getOwner(@NonNull Long projectId) {
-    var meta =
-      projectMemberJPA.findByProjectIdAndPermission(projectId, ProjectMemberPermission.OWNER);
-
-    return meta.map(ProjectMember::getAccount);
+    return projectMemberJPA
+      .findByProjectIdAndPermission(projectId, ProjectMemberPermission.OWNER)
+      .map(ProjectMember::getAccount);
   }
 
   @NonNull

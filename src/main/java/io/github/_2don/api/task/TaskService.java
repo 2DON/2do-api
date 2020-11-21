@@ -32,7 +32,7 @@ public class TaskService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -50,7 +50,7 @@ public class TaskService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -73,7 +73,7 @@ public class TaskService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -119,7 +119,7 @@ public class TaskService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -168,7 +168,7 @@ public class TaskService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.canNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 

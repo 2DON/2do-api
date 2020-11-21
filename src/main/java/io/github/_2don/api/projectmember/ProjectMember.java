@@ -73,7 +73,7 @@ public class ProjectMember {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 
-  public boolean canNot(ProjectMemberPermission permissions) {
+  public boolean isNot(ProjectMemberPermission permissions) {
     return this.permission.compareTo(permissions) < 0;
   }
 

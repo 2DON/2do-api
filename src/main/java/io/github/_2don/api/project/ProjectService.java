@@ -87,10 +87,10 @@ public class ProjectService {
                            String observation,
                            Integer ordinal,
                            String options) {
-    var projectMeta = projectMemberService
+    var member = projectMemberService
       .findIfHavePermission(accountId, projectId, ProjectMemberPermission.MAN_PROJECT);
 
-    var project = projectMeta.getProject();
+    var project = member.getProject();
 
     if (description != null) {
       if (description.length() <= 1 || description.getBytes().length > 1024) {
@@ -117,35 +117,40 @@ public class ProjectService {
       project.setOptions(options.isBlank() ? null : options);
     }
 
-    project.setUpdatedBy(projectMeta.getAccount());
+    project.setUpdatedBy(member.getAccount());
     project = projectJPA.save(project);
-    return new ProjectDTO(project, projectMeta.getPermission());
+    return new ProjectDTO(project, member.getPermission());
   }
 
   public ProjectDTO toggleArchiving(@NonNull Long accountId,
                                     @NonNull Long projectId) {
-    var projectMeta = projectMemberService
-      .findIfHavePermission(accountId, projectId, ProjectMemberPermission.OWNER);
+    var member = projectMemberJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElseThrow(Status.NOT_FOUND);
 
-    var project = projectMeta.getProject();
+    if (member.isNot(ProjectMemberPermission.OWNER)) {
+      throw Status.UNAUTHORIZED.get();
+    }
+
+    var project = member.getProject();
 
     project
       .setArchived(!project.getArchived())
-      .setUpdatedBy(projectMeta.getAccount());
+      .setUpdatedBy(member.getAccount());
 
     project = projectJPA.save(project);
-    return new ProjectDTO(project, projectMeta.getPermission());
+    return new ProjectDTO(project, member.getPermission());
   }
 
   public void delete(Long accountId,
                      Long projectId) {
-    var projectMeta = projectMemberService
+    var member = projectMemberService
       .findIfHavePermission(accountId, projectId, ProjectMemberPermission.OWNER);
 
     // TODO delete project + members + tasks + steps
     // TODO set delete cascade on tasks and steps
     // TODO backup project for X time
-    projectJPA.delete(projectMeta.getProject());
+    projectJPA.delete(member.getProject());
   }
 
 
