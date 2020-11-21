@@ -22,25 +22,43 @@ public class ProjectMemberController {
 
   @PostMapping
   public ProjectMemberDTO store(@AuthenticationPrincipal Long loggedId,
-                                @PathVariable Long projectId, @RequestParam(name = "accountId") Long accountId,
-                                @RequestParam(name = "teamId", required = false) Long teamId,
-                                @RequestParam(name = "permissions") String permissions) {
+                                @PathVariable Long projectId,
+                                @RequestPart(value = "accountId") String accountId,
+                                @RequestPart(value = "teamId", required = false) String teamId,
+                                @RequestPart(value = "permission") String permission) {
+    /*
+     * Note:
+     *  On the current version 2.0.4, Long and enum types don't work on @RequestPart,
+     *  but is no mention on the documentation or at forums. And the error has, like
+     *  most of spring boot errors, no explanation about what is the problem, just
+     *  returns a ResponseStatusException of UNSUPPORTED_MEDIA_TYPE. If I remember
+     *  is good to open a Issue about it, but i have no time for it now
+     *
+     * @author: wesauis
+     * @date:   21-11-2020 (dd-mm-yyyy) 09:41 (GMT-3)
+     */
 
-    var projectMemberPermissions = ProjectMemberPermission.valueOf(permissions);
-
-    if (projectMemberPermissions == null) {
+    ProjectMemberPermission perm;
+    try {
+      perm = ProjectMemberPermission.valueOf(permission);
+    } catch (IllegalArgumentException | NullPointerException ignored) {
+      perm = null;
+    }
+    if (accountId == null || perm == null) {
       throw Status.BAD_REQUEST.get();
     }
 
-    return projectMemberService.add(loggedId, projectId, accountId, teamId,
-      projectMemberPermissions);
+    System.out.printf("{accountId: %s, teamId: %s, perm: '%s'}\n", accountId, teamId, perm.toString());
+//    return projectMemberService.add(loggedId, projectId, accountId, teamId, permission);
+    return null;
   }
 
   @PatchMapping
-  public ProjectMemberDTO edit(@AuthenticationPrincipal Long loggedId, @PathVariable Long projectId,
-                               @RequestParam(name = "accountId") Long accountId,
-                               @RequestParam(name = "teamId", required = false) Long teamId,
-                               @RequestParam(name = "permissions") String permissions) {
+  public ProjectMemberDTO edit(@AuthenticationPrincipal Long loggedId,
+                               @PathVariable Long projectId,
+                               @RequestPart(name = "accountId") Long accountId,
+                               @RequestPart(name = "teamId", required = false) Long teamId,
+                               @RequestPart(name = "permissions") String permissions) {
 
     var projectMemberPermissions = ProjectMemberPermission.valueOf(permissions);
 
@@ -60,7 +78,7 @@ public class ProjectMemberController {
 
   @DeleteMapping
   public void destroy(@AuthenticationPrincipal Long loggedId, @PathVariable Long projectId,
-                      @RequestParam(name = "accountId") Long accountId) {
+                      @RequestPart(name = "accountId") Long accountId) {
     projectMemberService.delete(loggedId, projectId, accountId);
   }
 }
