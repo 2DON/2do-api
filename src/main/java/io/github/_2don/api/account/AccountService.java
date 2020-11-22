@@ -131,7 +131,7 @@ public class AccountService {
       }
     }
 
-    accountJPA.save(account);
+    account = accountJPA.save(account);
     return account;
   }
 

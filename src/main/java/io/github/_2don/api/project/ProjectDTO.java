@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 public class ProjectDTO {
 
   private Long id;
+  private String icon;
   private Integer ordinal;
   private String description;
   private String observation;
@@ -30,10 +31,11 @@ public class ProjectDTO {
                     ProjectMemberPermission permission) {
     this(
       project.getId(),
+      project.getIcon(), 
       project.getOrdinal(),
       project.getDescription(),
       project.getObservation(),
-      project.getArchived(),
+      project.getAchieved(),
       project.getOptions(),
       permission,
       project.getCreatedAt(),

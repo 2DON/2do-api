@@ -21,6 +21,9 @@ public class Project {
   @GeneratedValue
   private Long id;
 
+  @Column(columnDefinition = "TEXT")
+  private String icon;
+
   @Column(nullable = false)
   private Integer ordinal = Integer.MAX_VALUE;
 
@@ -31,7 +34,7 @@ public class Project {
   private String observation;
 
   @Column(nullable = false)
-  private Boolean archived = false;
+  private Boolean achieved = false;
 
   @Column(columnDefinition = "TEXT")
   private String options;

@@ -6,12 +6,15 @@ import io.github._2don.api.projectmember.ProjectMember;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
 import io.github._2don.api.projectmember.ProjectMemberPermission;
 import io.github._2don.api.projectmember.ProjectMemberService;
+import io.github._2don.api.utils.ImageEncoder;
 import io.github._2don.api.utils.Status;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,10 +50,10 @@ public class ProjectService {
     }
   }
 
-  public List<ProjectDTO> listByAccountId(@NonNull Long accountId,
-                                          boolean archived) {
+  public List<ProjectDTO> findProjects(@NonNull Long accountId,
+                                       boolean achieved) {
     return projectMemberJPA
-      .findAllByAccountIdAndProjectArchived(accountId, archived)
+      .findAllByAccountIdAndProjectArchieved(accountId, achieved)
       .stream()
       .map(ProjectDTO::new)
       .collect(Collectors.toList());
@@ -144,6 +147,32 @@ public class ProjectService {
     return new ProjectDTO(project, member.getPermission());
   }
 
+  public ProjectDTO updateIcon(Long accountId, Long projectId, MultipartFile icon) {
+    var member = projectMemberService.findIfIsMemberAndHavePermission(accountId, projectId, MAN_PROJECT);
+
+    var project = member.getProject();
+
+    if (icon == null || icon.isEmpty()) {
+      project
+        .setIcon(null)
+        .setUpdatedBy(member.getAccount());
+    } else {
+      if (!ImageEncoder.supports(icon.getContentType())) {
+        throw Status.BAD_REQUEST.get();
+      }
+
+      try {
+        project
+          .setIcon(ImageEncoder.encodeToString(icon.getBytes()))
+          .setUpdatedBy(member.getAccount());
+      } catch (IOException e) {
+        throw Status.BAD_REQUEST.get();
+      }
+    }
+
+    return new ProjectDTO(projectJPA.save(project), member.getPermission());
+  }
+
   public void transferOwnership(@NonNull Long ownerId,
                                 @NonNull Long projectId,
                                 @NonNull Long newOwnerId) {
@@ -181,7 +210,7 @@ public class ProjectService {
     var project = member.getProject();
 
     project
-      .setArchived(!project.getArchived())
+      .setAchieved(!project.getAchieved())
       .setUpdatedBy(member.getAccount());
 
     project = projectJPA.save(project);

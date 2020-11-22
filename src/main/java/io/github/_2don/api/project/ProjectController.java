@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,8 +17,8 @@ public class ProjectController {
 
   @GetMapping
   public List<ProjectDTO> index(@AuthenticationPrincipal Long accountId,
-                                @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
-    return projectService.listByAccountId(accountId, archived);
+                                @RequestParam(value = "achieved", required = false, defaultValue = "false") Boolean achieved) {
+    return projectService.findProjects(accountId, achieved);
   }
 
   @PostMapping
@@ -43,6 +44,13 @@ public class ProjectController {
                            @RequestPart(name = "ordinal", required = false) Integer ordinal,
                            @RequestPart(name = "options", required = false) String options) {
     return projectService.update(accountId, projectId, description, observation, ordinal, options);
+  }
+
+  @PutMapping("/{projectId}/icon")
+  public ProjectDTO updateIcon(@AuthenticationPrincipal Long accountId,
+                               @PathVariable Long projectId,
+                               @RequestPart(name = "icon", required = false) MultipartFile icon) {
+    return projectService.updateIcon(accountId, projectId, icon);
   }
 
   @GetMapping("/{projectId}/toggle-archiving")
