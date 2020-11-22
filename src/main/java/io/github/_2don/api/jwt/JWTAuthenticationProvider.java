@@ -1,13 +1,12 @@
 package io.github._2don.api.jwt;
 
 import io.github._2don.api.account.AccountJPA;
+import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Date;
 import java.util.Collections;
@@ -25,26 +24,27 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
     var email = authentication.getName();
     var password = authentication.getCredentials().toString();
 
-    var credentials = accountJPA.findByEmail(email)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    var account = accountJPA.findByEmail(email).orElseThrow(Status.NOT_FOUND);
 
-    if (credentials.getDeleteRequest() != null) {
-      if (credentials.getDeleteRequest().compareTo(new Date(System.currentTimeMillis())) > 0) {
+    if (account.getVerificationSentAt() != null) {
+      // account is not yet verified
+      throw Status.LOCKED.get();
+    }
+
+    if (account.getDeleteRequest() != null) {
+      if (account.getDeleteRequest().compareTo(new Date(System.currentTimeMillis())) > 0) {
         // account is still valid, so we will cancel the delete request
-        var stored = accountJPA.findById(credentials.getId())
-          .orElseThrow(() -> new ResponseStatusException(HttpStatus.GONE));
-        stored.setDeleteRequest(null);
-        accountJPA.save(stored);
+        accountJPA.save(account.setDeleteRequest(null));
       } else {
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        throw Status.NOT_FOUND.get();
       }
     }
 
-    if (!bcrypt.matches(password, credentials.getPassword())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+    if (!bcrypt.matches(password, account.getPassword())) {
+      throw Status.UNAUTHORIZED.get();
     }
 
-    return new UsernamePasswordAuthenticationToken(credentials.getId(), null, Collections.emptyList());
+    return new UsernamePasswordAuthenticationToken(account.getId(), null, Collections.emptyList());
   }
 
   @Override

@@ -1,14 +1,15 @@
 package io.github._2don.api.teammember;
 
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import io.github._2don.api.account.Account;
+import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
-import io.github._2don.api.team.Team;
+import io.github._2don.api.team.TeamJPA;
 import io.github._2don.api.team.TeamService;
+import io.github._2don.api.utils.Status;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamMemberService {
@@ -18,138 +19,99 @@ public class TeamMemberService {
   @Autowired
   private AccountService accountService;
   @Autowired
-  private TeamMembersJPA teamMembersJPA;
-
-  public TeamMember add(Long accountId, Long teamId) {
-
-    Account account = accountService.getAccount(accountId);
-    Team team = teamService.getTeam(teamId);
-
-    if (!account.getPremium()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    TeamMember teamMember = new TeamMember();
-    teamMember.setCreatedBy(account);
-    teamMember.setOperator(true);
-    teamMember.setAccount(account);
-    teamMember.setUpdatedBy(account);
-    teamMember.setTeam(team);
-
-    return teamMembersJPA.save(teamMember);
-  }
-
-  public TeamMember add(Long accountId, Long teamId, Long memberId) {
-
-    Account account = accountService.getAccount(accountId);
-    Account member = accountService.getAccount(memberId);
-
-    Team team = teamService.getTeam(teamId);
-
-    if (!account.getPremium()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    var teamMembers = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-
-    if (!teamMembers.getOperator()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    TeamMember teamMember = new TeamMember();
-    teamMember.setCreatedBy(account);
-    teamMember.setOperator(false);
-    teamMember.setAccount(member);
-    teamMember.setUpdatedBy(account);
-    teamMember.setTeam(team);
-
-    return teamMembersJPA.save(teamMember);
-  }
+  private TeamMemberJPA teamMemberJPA;
+  @Autowired
+  private AccountJPA accountJPA;
+  @Autowired
+  private TeamJPA teamJPA;
 
   public void assertIsMember(Long accountId, Long teamId) {
-    if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    if (!teamMemberJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
+      throw Status.UNAUTHORIZED.get();
     }
   }
 
-  public List<TeamMember> getTeamMembers(Long accountId, Long teamId) {
+  public List<TeamMemberDTO> findMembers(Long accountId, Long teamId) {
+    System.out.println(teamId);
+    System.out.println(teamMemberJPA
+      .findAllByTeamId(teamId));
 
-    if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
+    assertIsMember(accountId, teamId);
 
-    return teamMembersJPA.findAllByTeamId(teamId);
+    return teamMemberJPA
+      .findAllByTeamId(teamId)
+      .stream()
+      .map(TeamMemberDTO::new)
+      .collect(Collectors.toList());
   }
 
-  public List<TeamMember> getTeamMembers(Long accountId) {
-    return teamMembersJPA.findAllByAccountId(accountId);
-  }
+  public TeamMemberDTO addMember(Long loggedId, Long teamId, Long accountId) {
+    var logged = teamMemberJPA
+      .findByAccountIdAndTeamIdAndOperator(loggedId, teamId, true)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-  public TeamMember getTeamMember(Long accountId, Long teamId) {
-    return teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-  }
-
-  public boolean exist(Long accountId, Long teamId) {
-    return teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId);
-  }
-
-  public TeamMember update(Long accountId, Long memberId, Long teamId, Boolean operator) {
-
-    var loggedMeta = getTeamMember(accountId, teamId);
-    var accountMeta = getTeamMember(memberId, teamId);
-
-    if (!loggedMeta.getOperator()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-    if (!operator && teamMembersJPA.countByTeamIdAndOperator(teamId, true) < 2) {
-      throw new ResponseStatusException(HttpStatus.LOCKED);
+    if (teamMemberJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
+      throw Status.CONFLICT.get();
     }
 
-    accountMeta.setOperator(operator).setUpdatedBy(loggedMeta.getAccount());
-    return teamMembersJPA.save(accountMeta);
+    var target = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
+
+    if (!target.getPremium()) {
+      throw Status.UPGRADE_REQUIRED.get();
+    }
+
+    var member = new TeamMember()
+      .setAccount(target)
+      .setTeam(teamJPA.getOne(teamId))
+      .setOperator(false)
+      .setCreatedBy(logged.getAccount())
+      .setUpdatedBy(logged.getAccount());
+
+    return new TeamMemberDTO(teamMemberJPA.save(member));
   }
 
-  public void delete(Long accountLoggedId, Long accountId, Long teamId) {
+  public TeamMemberDTO update(Long loggedId, Long teamId, Long accountId, Boolean operator) {
+    var logged = teamMemberJPA
+      .findByAccountIdAndTeamIdAndOperator(loggedId, teamId, true)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    var loggedMeta = getTeamMember(accountLoggedId, teamId);
-    var accountMeta = getTeamMember(accountId, teamId);
+    var target = teamMemberJPA
+      .findByAccountIdAndTeamId(accountId, teamId)
+      .orElseThrow(Status.NOT_FOUND);
 
-    if (!loggedMeta.getOperator()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    if (!operator && target.getOperator()) {
+      var operators = teamMemberJPA.countByTeamIdAndOperator(teamId, true);
+
+      if (target.getOperator() && operators <= 1) {
+        throw Status.LOCKED.get();
+      }
     }
 
-    Long countOpertors = teamMembersJPA.countByTeamIdAndOperator(teamId, true);
+    target
+      .setOperator(operator)
+      .setUpdatedBy(logged.getAccount());
 
-    if (countOpertors <= 1) {
-      new ResponseStatusException(HttpStatus.FORBIDDEN);
-    }
-
-    // TODO(jonatanbirck): just delete?
-    teamMembersJPA.delete(accountMeta);
+    return new TeamMemberDTO(teamMemberJPA.save(target));
   }
 
-  public void delete(Long accountId, Long teamId) {
-    var teamMember = teamMembersJPA.findByAccountIdAndTeamId(accountId, teamId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+  public void removeMember(Long loggedId, Long teamId, Long accountId) {
+    var target = teamMemberJPA
+      .findByAccountIdAndTeamId(accountId, teamId)
+      .orElseThrow(Status.NOT_FOUND);
 
-    Long countOpertors = teamMembersJPA.countByTeamIdAndOperator(teamId, true);
+    if (accountId.equals(loggedId)) {
+      var operators = teamMemberJPA.countByTeamIdAndOperator(teamId, true);
 
-    if (countOpertors <= 1) {
-      new ResponseStatusException(HttpStatus.FORBIDDEN);
+      if (target.getOperator() && operators <= 1) {
+        throw Status.LOCKED.get();
+      }
+    } else {
+      if (!teamMemberJPA.existsByAccountIdAndTeamIdAndOperator(loggedId, teamId, true)) {
+        throw Status.UNAUTHORIZED.get();
+      }
     }
 
-    // TODO(jonatanbirck): just delete?
-    teamMembersJPA.delete(teamMember);
-  }
-
-  public void delete(Long teamId) {
-    List<TeamMember> teamsMember = teamMembersJPA.findAllByTeamId(teamId);
-
-    for (TeamMember teamMember : teamsMember) {
-      teamMembersJPA.delete(teamMember);
-    }
+    teamMemberJPA.delete(target);
   }
 
 }

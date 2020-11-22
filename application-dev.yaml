@@ -10,10 +10,9 @@ spring:
       - local
 
 server:
+  host: http://127.0.0.1
   error:
     include-message: always
 
 auth:
   secret: ${random.value}
-
-

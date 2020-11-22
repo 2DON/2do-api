@@ -1,63 +1,35 @@
 package io.github._2don.api.projectmember;
 
-import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.github._2don.api.account.Account;
-import io.github._2don.api.account.AccountToPublicAccountConverter;
-import io.github._2don.api.team.Team;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.experimental.Accessors;
+import lombok.NonNull;
 
 import java.sql.Timestamp;
 
+@Data
+@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public interface ProjectMemberDTO {
-  static ProjectMemberDTO from(ProjectMember projectMember) {
-    return new ProjectMemberDTO.Impl(
-      projectMember.getAccount(),
-      projectMember.getTeam(),
-      projectMember.getPermissions(),
+public class ProjectMemberDTO {
+
+  private Long accountId;
+  private Long teamId;
+  private ProjectMemberPermission permission;
+  private Timestamp createdAt;
+  private Long createdBy;
+  private Timestamp updatedAt;
+  private Long updatedBy;
+
+  public ProjectMemberDTO(@NonNull ProjectMember projectMember) {
+    this(
+      projectMember.getAccount().getId(),
+      projectMember.getTeam() == null ? null : projectMember.getTeam().getId(),
+      projectMember.getPermission(),
       projectMember.getCreatedAt(),
-      projectMember.getCreatedBy(),
+      projectMember.getCreatedBy().getId(),
       projectMember.getUpdatedAt(),
-      projectMember.getUpdatedBy()
+      projectMember.getUpdatedBy().getId()
     );
   }
 
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  Account getAccount();
-
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  Team getTeam();
-
-  ProjectMemberPermissions getPermissions();
-
-  Timestamp getCreatedAt();
-
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  Account getCreatedBy();
-
-  Timestamp getUpdatedAt();
-
-  @JsonSerialize(converter = AccountToPublicAccountConverter.class)
-  @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-  Account getUpdatedBy();
-
-  @Data
-  @AllArgsConstructor
-  @Accessors(chain = true)
-  class Impl implements ProjectMemberDTO {
-    private Account account;
-    private Team team;
-    private ProjectMemberPermissions permissions;
-    private Timestamp createdAt;
-    private Account createdBy;
-    private Timestamp updatedAt;
-    private Account updatedBy;
-  }
 }

@@ -7,19 +7,35 @@ spring:
     password: <password>
   jpa:
     generate-ddl: true
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
   servlet:
     multipart:
       enabled: true
       file-size-threshold: 2KB
       max-file-size: 900KB
+server:
+  host: <host>
 
 auth:
   secret: <secret>
   token:
     header: Authorization
     prefix: Bearer_
-    expiration: 2880000 # 8 hours
+    expiration: 480
     expired_value: EXPIRED
+  verification:
+    subject: 2DO Account Verification
+    secret: <verification-secret>
+    min_exp: 5
+    max_exp: 10
+
+non-premium-limits:
+  own-projects: 1
+  own-project-members: 5
+  participations: 3
 
 mail:
   sendgrid:

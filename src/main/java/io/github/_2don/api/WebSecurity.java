@@ -37,13 +37,16 @@ public class WebSecurity extends WebSecurityConfigurerAdapter {
       // disable default csrf as it will not be used
       .csrf().disable()
       // authorize requests that don't need auth
-      .authorizeRequests().antMatchers(HttpMethod.POST, "/accounts/sign-up").permitAll()
+      .authorizeRequests()
       .antMatchers(HttpMethod.GET, "/accounts/exists/{email}").permitAll()
+      .antMatchers(HttpMethod.POST, "/auth/sign-up/**").permitAll()
+      .antMatchers(HttpMethod.POST, "/auth/sign-up/fix-email").permitAll()
+      .antMatchers(HttpMethod.GET, "/auth/sign-up/verify/**").permitAll()
       // set all other requests for authenticated users only
       .anyRequest().authenticated().and()
       // add sign-in route
       .addFilterAt(
-        new JWTAuthenticationFilter(jwtConfig, authenticationManager(), "/accounts/sign-in"),
+        new JWTAuthenticationFilter(jwtConfig, authenticationManager(), "/auth/sign-in"),
         UsernamePasswordAuthenticationFilter.class)
       // check if users are logged in
       .addFilterAt(
