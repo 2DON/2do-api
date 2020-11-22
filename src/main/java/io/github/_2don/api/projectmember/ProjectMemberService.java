@@ -3,9 +3,7 @@ package io.github._2don.api.projectmember;
 import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
-import io.github._2don.api.project.ProjectService;
 import io.github._2don.api.team.TeamJPA;
-import io.github._2don.api.team.TeamService;
 import io.github._2don.api.teammember.TeamMemberService;
 import io.github._2don.api.utils.Status;
 import lombok.NonNull;
@@ -17,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.github._2don.api.projectmember.ProjectMemberPermission.MAN_MEMBERS;
 import static io.github._2don.api.projectmember.ProjectMemberPermission.OWNER;
@@ -30,8 +29,6 @@ public class ProjectMemberService {
   @Autowired
   private ProjectMemberJPA projectMemberJPA;
   @Autowired
-  private TeamService teamService;
-  @Autowired
   private AccountService accountService;
   @Autowired
   private TeamMemberService teamMemberService;
@@ -39,8 +36,6 @@ public class ProjectMemberService {
   private TeamJPA teamJPA;
   @Autowired
   private AccountJPA accountJPA;
-  @Autowired
-  private ProjectService projectService;
 
   public ProjectMemberService(@Value("${non-premium-limits.own-project-members}") long nonPremiumOwnProjectMemberLimit,
                               @Value("${non-premium-limits.participations}") long nonPremiumParticipationsLimit) {
@@ -75,7 +70,11 @@ public class ProjectMemberService {
   public List<ProjectMemberDTO> findMembers(@NonNull Long accountId,
                                             @NonNull Long projectId) {
     assertIsMember(accountId, projectId, HttpStatus.UNAUTHORIZED);
-    return projectMemberJPA.findAllByProjectId(projectId);
+    return projectMemberJPA
+      .findAllByProjectId(projectId)
+      .stream()
+      .map(ProjectMemberDTO::new)
+      .collect(Collectors.toList());
   }
 
   @NonNull
@@ -138,7 +137,7 @@ public class ProjectMemberService {
 
     newMember = projectMemberJPA.save(newMember);
 
-    return ProjectMemberDTO.from(newMember);
+    return new ProjectMemberDTO(newMember);
   }
 
   @NonNull
@@ -166,7 +165,7 @@ public class ProjectMemberService {
 
     target.setUpdatedBy(logged.getAccount());
 
-    return ProjectMemberDTO.from(projectMemberJPA.save(target));
+    return new ProjectMemberDTO(projectMemberJPA.save(target));
   }
 
   public void leaveOrRemoveMember(@NonNull Long loggedId,

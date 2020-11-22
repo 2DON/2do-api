@@ -23,7 +23,7 @@ public interface ProjectMemberJPA extends JpaRepository<ProjectMember, ProjectMe
 
   Optional<ProjectMember> findByAccountIdAndProjectIdAndPermission(Long accountId, Long projectId, ProjectMemberPermission permission);
 
-  List<ProjectMemberDTO> findAllByProjectId(Long projectId);
+  List<ProjectMember> findAllByProjectId(Long projectId);
 
   List<ProjectMember> findAllByAccountIdAndProjectArchived(Long accountId, boolean archived);
 
