@@ -1,6 +1,6 @@
 package io.github._2don.api.projectmember;
 
-public enum ProjectMemberPermissions {
+public enum ProjectMemberPermission {
   /**
    * Can see the project, tasks and steps
    */
@@ -18,7 +18,15 @@ public enum ProjectMemberPermissions {
    */
   MAN_PROJECT,
   /**
-   * Allowed to do everything, including deleting and archiving the project
+   * Allowed to do everything, including deleting and archive the project
    */
-  OWNER
+  OWNER;
+
+  public boolean lessThan(ProjectMemberPermission permission) {
+    return this.ordinal() < permission.ordinal();
+  }
+
+  public boolean greaterOrEqualTo(ProjectMemberPermission permission) {
+    return this.ordinal() >= permission.ordinal();
+  }
 }

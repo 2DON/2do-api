@@ -19,7 +19,6 @@ spring:
 server:
   host: <host>
 
-# TODO fix structure
 auth:
   secret: <secret>
   token:
@@ -32,6 +31,11 @@ auth:
     secret: <verification-secret>
     min_exp: 5
     max_exp: 10
+
+non-premium-limits:
+  own-projects: 1
+  own-project-members: 5
+  participations: 3
 
 mail:
   sendgrid:

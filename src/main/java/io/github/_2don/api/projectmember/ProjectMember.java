@@ -5,7 +5,6 @@ import io.github._2don.api.project.Project;
 import io.github._2don.api.team.Team;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -16,7 +15,6 @@ import java.sql.Timestamp;
 @Data
 @Entity
 @NoArgsConstructor
-@Accessors(chain = true)
 @IdClass(ProjectMemberId.class)
 public class ProjectMember {
 
@@ -42,8 +40,8 @@ public class ProjectMember {
 
   @NotNull
   @Column(nullable = false)
-  @Enumerated(EnumType.ORDINAL)
-  private ProjectMemberPermissions permissions;
+  @Enumerated(EnumType.STRING)
+  private ProjectMemberPermission permission;
 
   @CreationTimestamp
   @Column(nullable = false)
@@ -60,5 +58,9 @@ public class ProjectMember {
   @ManyToOne
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
+
+  public boolean isOwner() {
+    return ProjectMemberPermission.OWNER.equals(this.permission);
+  }
 
 }

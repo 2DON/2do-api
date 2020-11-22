@@ -42,7 +42,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
 
     var accountId = JWTUtils.verify(token, jwtConfig.getSecret());
 
-    if (accountId.isEmpty() || !accountJPA.existsById(accountId.get())) {
+    if (accountId.isEmpty() || !accountJPA.existsByIdAndVerificationSentAtAndDeleteRequest(accountId.get(), null, null)) {
       response.setHeader("Access-Control-Expose-Headers", jwtConfig.getTokenHeader());
       response.setHeader(jwtConfig.getTokenHeader(), jwtConfig.getTokenExpiredValue());
       chain.doFilter(request, response);

@@ -1,17 +1,20 @@
 package io.github._2don.api.team;
 
-import io.github._2don.api.account.AccountService;
+import io.github._2don.api.account.Account;
+import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.teammember.TeamMember;
-import io.github._2don.api.teammember.TeamMemberService;
+import io.github._2don.api.teammember.TeamMemberJPA;
 import io.github._2don.api.utils.ImageEncoder;
+import io.github._2don.api.utils.Status;
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,94 +23,114 @@ public class TeamService {
   @Autowired
   private TeamJPA teamJPA;
   @Autowired
-  private AccountService accountService;
+  private AccountJPA accountJPA;
   @Autowired
-  private TeamMemberService teamMemberService;
+  private TeamMemberJPA teamMemberJPA;
 
-  public List<Team> getTeams(Long accountId) {
-    return teamMemberService.getTeamMembers(accountId).stream().map(TeamMember::getTeam)
+  public List<TeamDTO> findTeams(@NonNull Long accountId) {
+    if (!accountJPA.findById(accountId).map(Account::getPremium).orElseThrow(Status.NOT_FOUND)) {
+      throw Status.UPGRADE_REQUIRED.get();
+    }
+
+    return teamMemberJPA
+      .findAllByAccountId(accountId)
+      .stream()
+      .map(TeamDTO::new)
       .collect(Collectors.toList());
   }
 
-  public Team getTeam(Long accountId, Long teamId) {
-
-    if (!teamMemberService.exist(accountId, teamId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    return teamJPA.findById(teamId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+  public Optional<TeamDTO> find(@NonNull Long accountId,
+                                @NonNull Long teamId) {
+    return teamMemberJPA
+      .findByAccountIdAndTeamId(accountId, teamId)
+      .map(TeamDTO::new);
   }
 
-  public Team add(Long accountId, Team team) {
-
-    var account = accountService.getAccount(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
+  public TeamDTO create(@NonNull Long accountId,
+                        @NonNull String name) {
+    var account = accountJPA.findById(accountId).orElseThrow(Status.GONE);
     if (!account.getPremium()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+      throw Status.UPGRADE_REQUIRED.get();
     }
 
-    team.setCreatedBy(account);
-    team.setUpdatedBy(account);
+    if (name.length() < 1 || name.length() >= 45) {
+      throw Status.BAD_REQUEST.get();
+    }
 
-    var teamCreated = teamJPA.save(team);
+    var team = new Team()
+      .setName(name)
+      .setCreatedBy(account)
+      .setUpdatedBy(account);
 
-    teamMemberService.add(account.getId(), team.getId());
+    team = teamJPA.save(team);
 
-    return teamCreated;
+    var member = teamMemberJPA.save(new TeamMember()
+      .setAccount(account)
+      .setTeam(team)
+      .setOperator(true)
+      .setCreatedBy(account)
+      .setUpdatedBy(account));
+
+    return new TeamDTO(member);
   }
 
-  public Team update(Long accountId, Long teamId, String name, String removeAvatar,
-                     MultipartFile avatar) {
+  public TeamDTO update(@NotNull Long accountId,
+                        @NotNull Long teamId,
+                        @NotNull String name) {
+    var member = teamMemberJPA.findByAccountIdAndTeamIdAndOperator(accountId, teamId, true).orElseThrow(Status.UNAUTHORIZED);
 
-    var teamMember = teamMemberService.getTeamMember(accountId, teamId);
+    var team = member.getTeam();
 
-    if (!teamMember.getOperator()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    if (name.length() < 1 || name.length() >= 45) {
+      throw Status.BAD_REQUEST.get();
     }
 
-    var team = teamJPA.findById(teamId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    team
+      .setName(name)
+      .setUpdatedBy(member.getAccount());
 
-    if (name != null) {
-      if (name.length() < 1 || name.length() > 45) {
-        throw new ResponseStatusException((HttpStatus.BAD_REQUEST));
-      }
+    team = teamJPA.save(team);
 
-      team.setName(name);
-    }
+    return new TeamDTO(team, true);
+  }
 
-    if (avatar != null) {
-      if (!ImageEncoder.supports(avatar.getContentType())) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+  public TeamDTO updateIcon(@NonNull Long accountId,
+                            @NonNull Long teamId,
+                            MultipartFile icon) {
+    var member = teamMemberJPA.findByAccountIdAndTeamIdAndOperator(accountId, teamId, true).orElseThrow(Status.UNAUTHORIZED);
+
+    var team = member.getTeam();
+
+    if (icon == null || icon.isEmpty()) {
+      team
+        .setIcon(null)
+        .setUpdatedBy(member.getAccount());
+    } else {
+      if (!ImageEncoder.supports(icon.getContentType())) {
+        throw Status.BAD_REQUEST.get();
       }
 
       try {
-        team.setAvatarUrl(ImageEncoder.encodeToString(avatar.getBytes()));
+        team
+          .setIcon(ImageEncoder.encodeToString(icon.getBytes()))
+          .setUpdatedBy(member.getAccount());
       } catch (IOException e) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        throw Status.BAD_REQUEST.get();
       }
-
-    } else if (removeAvatar != null) {
-      team.setAvatarUrl(null);
     }
 
-    team.setUpdatedBy(teamMember.getAccount());
-    return teamJPA.save(team);
+    return new TeamDTO(teamJPA.save(team), true);
   }
 
-  public void delete(Long accountId, Long teamId) {
+  public void delete(@NonNull Long accountId,
+                     @NonNull Long teamId) {
+    var member = teamMemberJPA
+      .findByAccountIdAndTeamIdAndOperator(accountId, teamId, true)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    var teamMember = teamMemberService.getTeamMember(accountId, teamId);
-
-    if (!teamMember.getOperator()) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    teamMemberService.delete(teamId);
-
-    // TODO just delete?
-    teamJPA.deleteById(teamId);
+    // TODO delete everything
+    teamJPA.delete(member.getTeam());
   }
+
+
 }

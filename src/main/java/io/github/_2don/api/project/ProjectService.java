@@ -1,143 +1,233 @@
 package io.github._2don.api.project;
 
+import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountJPA;
-import io.github._2don.api.account.AccountService;
 import io.github._2don.api.projectmember.ProjectMember;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
-import io.github._2don.api.projectmember.ProjectMemberPermissions;
+import io.github._2don.api.projectmember.ProjectMemberPermission;
 import io.github._2don.api.projectmember.ProjectMemberService;
+import io.github._2don.api.utils.ImageEncoder;
+import io.github._2don.api.utils.Status;
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Comparator;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static io.github._2don.api.projectmember.ProjectMemberPermission.MAN_PROJECT;
+import static io.github._2don.api.projectmember.ProjectMemberPermission.OWNER;
 
 @Service
 public class ProjectService {
 
+  private final long NON_PREMIUM_OWN_PROJECTS_LIMIT;
+
   @Autowired
   private ProjectJPA projectJPA;
   @Autowired
-  private AccountService accountService;
+  private ProjectMemberJPA projectMemberJPA;
   @Autowired
   private ProjectMemberService projectMemberService;
   @Autowired
   private AccountJPA accountJPA;
-  @Autowired
-  private ProjectMemberJPA projectMemberJPA;
 
-  // FIXME
-  public Project add(Long accountId, Project project) {
+  public ProjectService(@Value("${non-premium-limits.own-projects}") long nonPremiumOwnProjectsLimit) {
+    this.NON_PREMIUM_OWN_PROJECTS_LIMIT = nonPremiumOwnProjectsLimit;
+  }
 
-    var account = accountJPA.findById(accountId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+  public void assertProjectLimit(@NonNull Long accountId) {
+    assertProjectLimit(accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND));
+  }
 
-    projectMemberService.assertProjectLimit(accountId);
+  public void assertProjectLimit(@NonNull Account account) {
+    if (!account.getPremium()
+      && projectMemberJPA.countByAccountIdAndPermission(account.getId(), OWNER) >= NON_PREMIUM_OWN_PROJECTS_LIMIT) {
+      throw Status.UPGRADE_REQUIRED.get();
+    }
+  }
 
-    project.setCreatedBy(account);
-    project.setUpdatedBy(account);
+  public List<ProjectDTO> findProjects(@NonNull Long accountId,
+                                       boolean archived) {
+    return projectMemberJPA
+      .findAllByAccountIdAndProjectArchived(accountId, archived)
+      .stream()
+      .map(ProjectDTO::new)
+      .collect(Collectors.toList());
+  }
 
+  public ProjectDTO find(Long accountId, Long projectId) {
+    return projectMemberJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .map(ProjectDTO::new)
+      .orElseThrow(Status.UNAUTHORIZED);
+  }
+
+  public ProjectDTO create(@NonNull Long accountId,
+                           @NonNull String description,
+                           String observation,
+                           Integer ordinal) {
+    if (description.length() <= 1 || description.getBytes().length > 1024) {
+      throw Status.BAD_REQUEST.get();
+    }
+
+    assertProjectLimit(accountId);
+
+    var project = new Project()
+      .setDescription(description)
+      .setOrdinal(ordinal == null ? Integer.MAX_VALUE : ordinal);
+
+    System.out.println(project);
+
+    if (observation != null) {
+      if (observation.isBlank()) {
+        project.setObservation(null);
+      } else if (observation.length() <= 1 || observation.length() > 250) {
+        throw Status.BAD_REQUEST.get();
+      } else {
+        project.setObservation(observation);
+      }
+    }
+
+    var account = accountJPA.getOne(accountId);
+    project
+      .setCreatedBy(account)
+      .setUpdatedBy(account);
     project = projectJPA.save(project);
 
-    projectMemberJPA.save(new ProjectMember().setAccountId(accountId).setProjectId(project.getId())
-      .setPermissions(ProjectMemberPermissions.OWNER).setCreatedBy(account)
+    projectMemberJPA.save(new ProjectMember()
+      .setAccountId(accountId)
+      .setProjectId(project.getId())
+      .setPermission(ProjectMemberPermission.OWNER)
+      .setCreatedBy(account)
       .setUpdatedBy(account));
 
-    return project;
+    return new ProjectDTO(project, ProjectMemberPermission.OWNER);
   }
 
-  public Project update(Long accountId, Long oldProjectId, Project project) {
+  public ProjectDTO update(@NonNull Long accountId,
+                           @NonNull Long projectId,
+                           String description,
+                           String observation,
+                           Integer ordinal,
+                           String options) {
+    var member = projectMemberService
+      .findIfIsMemberAndHavePermission(accountId, projectId, ProjectMemberPermission.MAN_PROJECT);
 
-    var projectMember =
-      projectMemberService.getProjectMember(accountId, oldProjectId).orElse(null);
+    var project = member.getProject();
 
-    if (projectMember == null
-      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
-      // not enough permission
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    var projectEdit = projectMember.getProject();
-
-    // project is archived and the request don't unarchive it
-    // TODO archiving deserves his own route?
-    if (projectEdit.getArchived() && (project.getArchived() == null || !project.getArchived())) {
-      throw new ResponseStatusException(HttpStatus.LOCKED);
-    }
-
-    if (project.getArchived() != null) {
-      projectEdit.setArchived(project.getArchived());
-    }
-
-    if (project.getDescription() != null) {
-      if (project.getDescription().length() == 0) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+    if (description != null) {
+      if (description.length() <= 1 || description.getBytes().length > 1024) {
+        throw Status.BAD_REQUEST.get();
       }
-      projectEdit.setDescription(project.getDescription());
+      project.setDescription(description);
     }
 
-    if (projectEdit.getObservation() != null) {
-      if (projectEdit.getObservation().length() == 0) {
+    if (observation != null) {
+      if (observation.isBlank()) {
         project.setObservation(null);
+      } else if (observation.length() <= 1 || observation.length() > 250) {
+        throw Status.BAD_REQUEST.get();
       } else {
-        project.setObservation(projectEdit.getObservation());
+        project.setObservation(observation);
       }
     }
 
-    if (projectEdit.getOptions() != null) {
-      if (projectEdit.getOptions().length() == 0) {
-        project.setOptions(null);
-      } else {
-        project.setOptions(projectEdit.getOptions());
-      }
+    if (ordinal != null) {
+      project.setOrdinal(ordinal);
     }
 
-    projectEdit.setUpdatedBy(projectMember.getAccount());
+    if (options != null) {
+      project.setOptions(options.isBlank() ? null : options);
+    }
 
-    return projectJPA.save(projectEdit);
+    project.setUpdatedBy(member.getAccount());
+    project = projectJPA.save(project);
+    return new ProjectDTO(project, member.getPermission());
   }
 
-  public void delete(Long accountId, Long projectId) {
+  public ProjectDTO updateIcon(Long accountId, Long projectId, MultipartFile icon) {
+    var member = projectMemberService.findIfIsMemberAndHavePermission(accountId, projectId, MAN_PROJECT);
 
-    ProjectMember projectMember =
-      projectMemberService.getProjectMember(accountId, projectId).orElse(null);
+    var project = member.getProject();
 
-    if (projectMember == null
-      || projectMember.getPermissions().compareTo(ProjectMemberPermissions.MAN_PROJECT) < 0) {
-      // not enough permission
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+    if (icon == null || icon.isEmpty()) {
+      project
+        .setIcon(null)
+        .setUpdatedBy(member.getAccount());
+    } else {
+      if (!ImageEncoder.supports(icon.getContentType())) {
+        throw Status.BAD_REQUEST.get();
+      }
+
+      try {
+        project
+          .setIcon(ImageEncoder.encodeToString(icon.getBytes()))
+          .setUpdatedBy(member.getAccount());
+      } catch (IOException e) {
+        throw Status.BAD_REQUEST.get();
+      }
     }
+
+    return new ProjectDTO(projectJPA.save(project), member.getPermission());
+  }
+
+  public void transferOwnership(@NonNull Long ownerId,
+                                @NonNull Long projectId,
+                                @NonNull Long newOwnerId) {
+    if (ownerId.equals(newOwnerId)) {
+      throw Status.BAD_REQUEST.get();
+    }
+
+    var owner = projectMemberService.findIfIsMemberAndHavePermission(ownerId, projectId, OWNER);
+    var newOwner = projectMemberService.findIfIsMember(newOwnerId, projectId);
+
+    assertProjectLimit(newOwner.getAccount()); // new owner is premium or have not reached the project limit
+
+    owner
+      .setPermission(MAN_PROJECT)
+      .setUpdatedBy(owner.getAccount());
+
+    newOwner
+      .setPermission(OWNER)
+      .setUpdatedBy(owner.getAccount());
+
+    projectMemberJPA.save(owner);
+    projectMemberJPA.save(newOwner);
+  }
+
+  public ProjectDTO toggleArchived(@NonNull Long accountId,
+                                   @NonNull Long projectId) {
+    var member = projectMemberJPA
+      .findByAccountIdAndProjectId(accountId, projectId)
+      .orElseThrow(Status.NOT_FOUND);
+
+    if (!member.isOwner()) {
+      throw Status.UNAUTHORIZED.get();
+    }
+
+    var project = member.getProject();
+
+    project
+      .setArchived(!project.isArchived())
+      .setUpdatedBy(member.getAccount());
+
+    project = projectJPA.save(project);
+    return new ProjectDTO(project, member.getPermission());
+  }
+
+  public void delete(Long accountId,
+                     Long projectId) {
+    var member = projectMemberService
+      .findIfIsMemberAndHavePermission(accountId, projectId, ProjectMemberPermission.OWNER);
 
     // TODO delete project + members + tasks + steps
     // TODO set delete cascade on tasks and steps
     // TODO backup project for X time
-    projectJPA.delete(projectJPA.getOne(projectId));
+    projectJPA.delete(member.getProject());
   }
-
-  public Project getProject(Long accountId, Long projectId) {
-
-    if (!projectMemberService.exist(accountId, projectId)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-    }
-
-    return projectJPA.findById(projectId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
-  }
-
-  public List<Project> getAllProjectByAccountId(Long accountId, boolean archived) {
-    return projectMemberService.getAllProjectMembers(accountId).stream()
-      .map(ProjectMember::getProject).filter(project -> project.getArchived() == archived)
-      .sorted(Comparator.comparingInt(Project::getOrdinal)).collect(Collectors.toList());
-  }
-
-  public List<Project> getAllProjectByAccountId(Long accountId) {
-    return projectMemberService.getAllProjectMembers(accountId).stream()
-      .map(ProjectMember::getProject).sorted(Comparator.comparingInt(Project::getOrdinal))
-      .collect(Collectors.toList());
-  }
-
 
 }

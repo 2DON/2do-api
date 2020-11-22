@@ -1,18 +1,12 @@
 package io.github._2don.api.projectmember;
 
-import java.util.List;
+import io.github._2don.api.utils.Convert;
+import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/projects/{projectId}/members")
@@ -23,51 +17,64 @@ public class ProjectMemberController {
 
   @GetMapping
   public List<ProjectMemberDTO> index(@AuthenticationPrincipal Long loggedId,
-      @PathVariable Long projectId) {
-    return projectMemberService.list(loggedId, projectId);
+                                      @PathVariable Long projectId) {
+    return projectMemberService.findMembers(loggedId, projectId);
   }
 
   @PostMapping
-  public ProjectMemberDTO store(@AuthenticationPrincipal Long loggedId,
-      @PathVariable Long projectId, @RequestParam(name = "accountId") Long accountId,
-      @RequestParam(name = "teamId", required = false) Long teamId,
-      @RequestParam(name = "permissions") String permissions) {
+  public ProjectMemberDTO add(@AuthenticationPrincipal Long loggedId,
+                              @PathVariable Long projectId,
+                              @RequestPart(value = "accountId") String accountId,
+                              @RequestPart(value = "teamId", required = false) String teamId,
+                              @RequestPart(value = "permission") String permission) {
+    /*
+     * Note:
+     *  On the current version 2.0.4, Long and enum types don't work on @RequestPart,
+     *  but is no mention on the documentation or at forums. And the error has, like
+     *  most of spring boot errors, no explanation about what is the problem, just
+     *  returns a ResponseStatusException of UNSUPPORTED_MEDIA_TYPE. If I remember
+     *  is good to open a Issue about it, but i have no time for it now
+     *
+     * @author: wesauis
+     * @date:   21-11-2020 (dd-mm-yyyy) 09:41 (GMT-3)
+     */
 
-    var projectMemberPermissions = ProjectMemberPermissions.valueOf(permissions);
+    var _accountId
+      = Convert.toLong(accountId)
+      .orElseThrow(Status.BAD_REQUEST);
 
-    if (projectMemberPermissions == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-    }
+    var _permission
+      = Convert.toEnum(ProjectMemberPermission.class, permission)
+      .orElseThrow(Status.BAD_REQUEST);
 
-    return projectMemberService.add(loggedId, projectId, accountId, teamId,
-        projectMemberPermissions);
+    var _teamId = teamId == null
+      ? null
+      : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
+
+    return projectMemberService.addMember(loggedId, projectId, _accountId, _teamId, _permission);
   }
 
-  @PatchMapping
-  public ProjectMemberDTO edit(@AuthenticationPrincipal Long loggedId, @PathVariable Long projectId,
-      @RequestParam(name = "accountId") Long accountId,
-      @RequestParam(name = "teamId", required = false) Long teamId,
-      @RequestParam(name = "permissions") String permissions) {
+  @PatchMapping("/{accountId}")
+  public ProjectMemberDTO update(@AuthenticationPrincipal Long loggedId,
+                                 @PathVariable Long projectId,
+                                 @PathVariable Long accountId,
+                                 @RequestPart(value = "teamId", required = false) String teamId,
+                                 @RequestPart(value = "permission", required = false) String permission) {
+    var _permission = permission == null
+      ? null
+      : Convert.toEnum(ProjectMemberPermission.class, permission).orElseThrow(Status.BAD_REQUEST);
 
-    var projectMemberPermissions = ProjectMemberPermissions.valueOf(permissions);
+    var _teamId = teamId == null
+      ? null
+      : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
 
-    if (projectMemberPermissions == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
-    }
-
-    return projectMemberService.edit(loggedId, projectId, accountId, teamId,
-        projectMemberPermissions);
+    return projectMemberService.update(loggedId, projectId, accountId, _teamId, _permission);
   }
 
-  @GetMapping("/{newOwnerId}")
-  public void transferOwnership(@AuthenticationPrincipal Long loggedId,
-      @PathVariable Long projectId, @PathVariable Long newOwnerId) {
-    projectMemberService.transferOwnership(loggedId, projectId, newOwnerId);
-  }
-
-  @DeleteMapping
-  public void destroy(@AuthenticationPrincipal Long loggedId, @PathVariable Long projectId,
-      @RequestParam(name = "accountId") Long accountId) {
-    projectMemberService.delete(loggedId, projectId, accountId);
+  @DeleteMapping("/{accountId}")
+  public void remove(@AuthenticationPrincipal Long loggedId,
+                     @PathVariable Long projectId,
+                     @PathVariable Long accountId) {
+    projectMemberService.leaveOrRemoveMember(loggedId, projectId, accountId);
   }
 }
