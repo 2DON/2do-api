@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface TeamMembersJPA extends JpaRepository<TeamMember, TeamMembersId> {
+public interface TeamMemberJPA extends JpaRepository<TeamMember, TeamMemberId> {
 
   List<TeamMember> findAllByAccountId(Long accountId);
 
@@ -18,5 +18,7 @@ public interface TeamMembersJPA extends JpaRepository<TeamMember, TeamMembersId>
   Long countByTeamIdAndOperator(Long teamId, Boolean operator);
 
   Optional<TeamMember> findByAccountIdAndTeamIdAndOperator(Long accountId, Long teamId, Boolean operator);
+
+  boolean existsByAccountIdAndTeamIdAndOperator(Long accountId, Long teamId, Boolean operator);
 
 }

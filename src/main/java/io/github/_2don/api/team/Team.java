@@ -44,8 +44,4 @@ public class Team {
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
-  public Team(@NotNull @Size(min = 1, max = 45) String name) {
-    this.name = name;
-  }
-
 }

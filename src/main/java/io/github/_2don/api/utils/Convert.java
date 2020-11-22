@@ -20,4 +20,12 @@ public class Convert {
     }
   }
 
+  public static Optional<Boolean> toBoolean(String string) {
+    try {
+      return Optional.of(Boolean.parseBoolean(string));
+    } catch (NumberFormatException ignored) {
+      return Optional.empty();
+    }
+  }
+
 }

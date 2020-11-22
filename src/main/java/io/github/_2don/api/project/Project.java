@@ -8,7 +8,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
 import java.sql.Timestamp;
 
 @Data
@@ -54,9 +53,5 @@ public class Project {
   @ManyToOne
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
-
-  public Project(@NotBlank String description) {
-    this.description = description;
-  }
 
 }

@@ -56,8 +56,4 @@ public class Step {
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
-  public Step(Task task, @NotNull @Size(min = 1, max = 80) String description) {
-    this.task = task;
-    this.description = description;
-  }
 }

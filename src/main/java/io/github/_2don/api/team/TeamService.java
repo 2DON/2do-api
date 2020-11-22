@@ -3,7 +3,7 @@ package io.github._2don.api.team;
 import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.teammember.TeamMember;
-import io.github._2don.api.teammember.TeamMembersJPA;
+import io.github._2don.api.teammember.TeamMemberJPA;
 import io.github._2don.api.utils.ImageEncoder;
 import io.github._2don.api.utils.Status;
 import lombok.NonNull;
@@ -25,14 +25,14 @@ public class TeamService {
   @Autowired
   private AccountJPA accountJPA;
   @Autowired
-  private TeamMembersJPA teamMembersJPA;
+  private TeamMemberJPA teamMemberJPA;
 
   public List<TeamDTO> findTeams(@NonNull Long accountId) {
     if (!accountJPA.findById(accountId).map(Account::getPremium).orElseThrow(Status.NOT_FOUND)) {
       throw Status.UPGRADE_REQUIRED.get();
     }
 
-    return teamMembersJPA
+    return teamMemberJPA
       .findAllByAccountId(accountId)
       .stream()
       .map(TeamDTO::new)
@@ -41,7 +41,7 @@ public class TeamService {
 
   public Optional<TeamDTO> find(@NonNull Long accountId,
                                 @NonNull Long teamId) {
-    return teamMembersJPA
+    return teamMemberJPA
       .findByAccountIdAndTeamId(accountId, teamId)
       .map(TeamDTO::new);
   }
@@ -64,7 +64,7 @@ public class TeamService {
 
     team = teamJPA.save(team);
 
-    var member = teamMembersJPA.save(new TeamMember()
+    var member = teamMemberJPA.save(new TeamMember()
       .setAccount(account)
       .setTeam(team)
       .setOperator(true)
@@ -77,7 +77,7 @@ public class TeamService {
   public TeamDTO update(@NotNull Long accountId,
                         @NotNull Long teamId,
                         @NotNull String name) {
-    var member = teamMembersJPA.findByAccountIdAndTeamIdAndOperator(accountId, teamId, true).orElseThrow(Status.UNAUTHORIZED);
+    var member = teamMemberJPA.findByAccountIdAndTeamIdAndOperator(accountId, teamId, true).orElseThrow(Status.UNAUTHORIZED);
 
     var team = member.getTeam();
 
@@ -97,7 +97,7 @@ public class TeamService {
   public TeamDTO updateIcon(@NonNull Long accountId,
                             @NonNull Long teamId,
                             MultipartFile icon) {
-    var member = teamMembersJPA.findByAccountIdAndTeamIdAndOperator(accountId, teamId, true).orElseThrow(Status.UNAUTHORIZED);
+    var member = teamMemberJPA.findByAccountIdAndTeamIdAndOperator(accountId, teamId, true).orElseThrow(Status.UNAUTHORIZED);
 
     var team = member.getTeam();
 
@@ -124,7 +124,7 @@ public class TeamService {
 
   public void delete(@NonNull Long accountId,
                      @NonNull Long teamId) {
-    var member = teamMembersJPA
+    var member = teamMemberJPA
       .findByAccountIdAndTeamIdAndOperator(accountId, teamId, true)
       .orElseThrow(Status.UNAUTHORIZED);
 

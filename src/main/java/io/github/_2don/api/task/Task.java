@@ -60,10 +60,4 @@ public class Task {
   @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
-  public Task(Project project, @NotNull @Size(min = 1, max = 80) String description,
-              Account assignedTo) {
-    this.project = project;
-    this.description = description;
-    this.assignedTo = assignedTo;
-  }
 }

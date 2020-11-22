@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamMemberService {
@@ -18,135 +19,99 @@ public class TeamMemberService {
   @Autowired
   private AccountService accountService;
   @Autowired
-  private TeamMembersJPA teamMembersJPA;
+  private TeamMemberJPA teamMemberJPA;
   @Autowired
   private AccountJPA accountJPA;
   @Autowired
   private TeamJPA teamJPA;
 
-  public TeamMember add(Long accountId, Long teamId) {
-    var account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
-    var team = teamJPA.findById(teamId).orElseThrow(Status.NOT_FOUND);
-
-    if (!account.getPremium()) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    TeamMember teamMember = new TeamMember();
-    teamMember.setCreatedBy(account);
-    teamMember.setOperator(true);
-    teamMember.setAccount(account);
-    teamMember.setUpdatedBy(account);
-    teamMember.setTeam(team);
-
-    return teamMembersJPA.save(teamMember);
-  }
-
-  public TeamMember add(Long accountId, Long teamId, Long memberId) {
-    var account = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
-    var member = accountJPA.findById(memberId).orElseThrow(Status.NOT_FOUND);
-    var team = teamJPA.findById(teamId).orElseThrow(Status.NOT_FOUND);
-
-    if (!account.getPremium()) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    var teamMembers = teamMembersJPA
-      .findByAccountIdAndTeamId(accountId, teamId)
-      .orElseThrow(Status.UNAUTHORIZED);
-
-    if (!teamMembers.getOperator()) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    TeamMember teamMember = new TeamMember();
-    teamMember.setCreatedBy(account);
-    teamMember.setOperator(false);
-    teamMember.setAccount(member);
-    teamMember.setUpdatedBy(account);
-    teamMember.setTeam(team);
-
-    return teamMembersJPA.save(teamMember);
-  }
-
   public void assertIsMember(Long accountId, Long teamId) {
-    if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
+    if (!teamMemberJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
       throw Status.UNAUTHORIZED.get();
     }
   }
 
-  public List<TeamMember> getTeamMembers(Long accountId, Long teamId) {
-    if (!teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
-      throw Status.UNAUTHORIZED.get();
-    }
+  public List<TeamMemberDTO> findMembers(Long accountId, Long teamId) {
+    System.out.println(teamId);
+    System.out.println(teamMemberJPA
+      .findAllByTeamId(teamId));
 
-    return teamMembersJPA.findAllByTeamId(teamId);
+    assertIsMember(accountId, teamId);
+
+    return teamMemberJPA
+      .findAllByTeamId(teamId)
+      .stream()
+      .map(TeamMemberDTO::new)
+      .collect(Collectors.toList());
   }
 
-  public TeamMember getTeamMember(Long accountId, Long teamId) {
-    return teamMembersJPA
-      .findByAccountIdAndTeamId(accountId, teamId)
-      .orElseThrow(Status.UNAUTHORIZED);
-  }
-
-  public boolean exist(Long accountId, Long teamId) {
-    return teamMembersJPA.existsByAccountIdAndTeamId(accountId, teamId);
-  }
-
-  public TeamMember update(Long accountId, Long memberId, Long teamId, Boolean operator) {
-    var loggedMeta = getTeamMember(accountId, teamId);
-    var accountMeta = getTeamMember(memberId, teamId);
-
-    if (!loggedMeta.getOperator()) {
-      throw Status.UNAUTHORIZED.get();
-    }
-    if (!operator && teamMembersJPA.countByTeamIdAndOperator(teamId, true) < 2) {
-      throw Status.LOCKED.get();
-    }
-
-    accountMeta.setOperator(operator).setUpdatedBy(loggedMeta.getAccount());
-    return teamMembersJPA.save(accountMeta);
-  }
-
-  public void delete(Long accountLoggedId, Long accountId, Long teamId) {
-    var loggedMeta = getTeamMember(accountLoggedId, teamId);
-    var accountMeta = getTeamMember(accountId, teamId);
-
-    if (!loggedMeta.getOperator()) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    Long countOpertors = teamMembersJPA.countByTeamIdAndOperator(teamId, true);
-
-    if (countOpertors <= 1) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    // TODO(jonatanbirck): just delete?
-    teamMembersJPA.delete(accountMeta);
-  }
-
-  public void delete(Long accountId, Long teamId) {
-    var teamMember = teamMembersJPA
-      .findByAccountIdAndTeamId(accountId, teamId)
+  public TeamMemberDTO addMember(Long loggedId, Long teamId, Long accountId) {
+    var logged = teamMemberJPA
+      .findByAccountIdAndTeamIdAndOperator(loggedId, teamId, true)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    Long countOpertors = teamMembersJPA.countByTeamIdAndOperator(teamId, true);
-
-    if (countOpertors <= 1) {
-      throw Status.UNAUTHORIZED.get();
+    if (teamMemberJPA.existsByAccountIdAndTeamId(accountId, teamId)) {
+      throw Status.CONFLICT.get();
     }
 
-    // TODO(jonatanbirck): just delete?
-    teamMembersJPA.delete(teamMember);
+    var target = accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND);
+
+    if (!target.getPremium()) {
+      throw Status.UPGRADE_REQUIRED.get();
+    }
+
+    var member = new TeamMember()
+      .setAccount(target)
+      .setTeam(teamJPA.getOne(teamId))
+      .setOperator(false)
+      .setCreatedBy(logged.getAccount())
+      .setUpdatedBy(logged.getAccount());
+
+    return new TeamMemberDTO(teamMemberJPA.save(member));
   }
 
-  public void delete(Long teamId) {
-    List<TeamMember> teamsMember = teamMembersJPA.findAllByTeamId(teamId);
+  public TeamMemberDTO update(Long loggedId, Long teamId, Long accountId, Boolean operator) {
+    var logged = teamMemberJPA
+      .findByAccountIdAndTeamIdAndOperator(loggedId, teamId, true)
+      .orElseThrow(Status.UNAUTHORIZED);
 
-    for (TeamMember teamMember : teamsMember) {
-      teamMembersJPA.delete(teamMember);
+    var target = teamMemberJPA
+      .findByAccountIdAndTeamId(accountId, teamId)
+      .orElseThrow(Status.NOT_FOUND);
+
+    if (!operator && target.getOperator()) {
+      var operators = teamMemberJPA.countByTeamIdAndOperator(teamId, true);
+
+      if (target.getOperator() && operators <= 1) {
+        throw Status.LOCKED.get();
+      }
     }
+
+    target
+      .setOperator(operator)
+      .setUpdatedBy(logged.getAccount());
+
+    return new TeamMemberDTO(teamMemberJPA.save(target));
+  }
+
+  public void removeMember(Long loggedId, Long teamId, Long accountId) {
+    var target = teamMemberJPA
+      .findByAccountIdAndTeamId(accountId, teamId)
+      .orElseThrow(Status.NOT_FOUND);
+
+    if (accountId.equals(loggedId)) {
+      var operators = teamMemberJPA.countByTeamIdAndOperator(teamId, true);
+
+      if (target.getOperator() && operators <= 1) {
+        throw Status.LOCKED.get();
+      }
+    } else {
+      if (!teamMemberJPA.existsByAccountIdAndTeamIdAndOperator(loggedId, teamId, true)) {
+        throw Status.UNAUTHORIZED.get();
+      }
+    }
+
+    teamMemberJPA.delete(target);
   }
 
 }
