@@ -172,7 +172,7 @@ public class ProjectMemberService {
   public void leaveOrRemoveMember(@NonNull Long loggedId,
                                   @NonNull Long projectId,
                                   @NonNull Long accountId) {
-    var target = findIfIsMember(loggedId, projectId);
+    var target = findIfIsMember(accountId, projectId);
 
     if (target.isOwner()) {
       // no-one can remove the owner, he needs to transfer ownership first
