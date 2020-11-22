@@ -28,7 +28,7 @@ public class Task {
   @JsonIdentityReference(alwaysAsId = true)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @ManyToOne
-  @JoinColumn(referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(referencedColumnName = "id", nullable = false)
   private Project project;
 
   @Column(nullable = false)
@@ -49,7 +49,7 @@ public class Task {
   @JsonIdentityReference(alwaysAsId = true)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @ManyToOne
-  @JoinColumn(name = "assigned_to", referencedColumnName = "id", insertable = false, updatable = false)
+  @JoinColumn(name = "assigned_to", referencedColumnName = "id")
   private Account assignedTo;
 
   @CreationTimestamp
@@ -60,7 +60,7 @@ public class Task {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
@@ -72,7 +72,7 @@ public class Task {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 

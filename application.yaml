@@ -32,6 +32,11 @@ auth:
     min_exp: 5
     max_exp: 10
 
+non-premium-limits:
+  own-projects: 1
+  own-project-members: 5
+  participations: 3
+
 mail:
   sendgrid:
     api_key: <sendgrid_api_key>

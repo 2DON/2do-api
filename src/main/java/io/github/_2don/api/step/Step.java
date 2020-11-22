@@ -29,7 +29,7 @@ public class Step {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @ManyToOne
   @JsonIgnore
-  @JoinColumn(referencedColumnName = "id", insertable = false, updatable = false)
+  @JoinColumn(referencedColumnName = "id")
   private Task task;
 
   @Column(nullable = false)
@@ -55,7 +55,7 @@ public class Step {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
@@ -67,7 +67,7 @@ public class Step {
   @ManyToOne
   @JsonProperty(access = Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 

@@ -24,7 +24,7 @@ public class TeamMember {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JoinColumn(referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(referencedColumnName = "id", nullable = false)
   private Account account;
 
   @Id
@@ -32,7 +32,7 @@ public class TeamMember {
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-  @JoinColumn(referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(referencedColumnName = "id", nullable = false)
   private Team team;
 
   @NotNull
@@ -47,7 +47,7 @@ public class TeamMember {
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
@@ -59,7 +59,7 @@ public class TeamMember {
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 

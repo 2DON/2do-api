@@ -41,7 +41,7 @@ public class ProjectMember {
   @JsonIdentityReference(alwaysAsId = true)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   @ManyToOne
-  @JoinColumn(referencedColumnName = "id", insertable = false, updatable = false)
+  @JoinColumn(referencedColumnName = "id")
   private Team team;
 
   @NotNull
@@ -57,7 +57,7 @@ public class ProjectMember {
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account createdBy;
 
@@ -69,12 +69,12 @@ public class ProjectMember {
   @ManyToOne
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   @JsonIdentityReference(alwaysAsId = true)
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
   private Account updatedBy;
 
-  public boolean isNot(ProjectMemberPermission permissions) {
-    return this.permission.compareTo(permissions) < 0;
+  public boolean isOwner() {
+    return ProjectMemberPermission.OWNER.equals(this.permission);
   }
 
 }

@@ -51,6 +51,13 @@ public class ProjectController {
     return projectService.toggleArchiving(accountId, projectId);
   }
 
+  @GetMapping("/{projectId}/transfer-to/{newOwnerId}")
+  public void transferOwnership(@AuthenticationPrincipal Long loggedId,
+                                @PathVariable Long projectId,
+                                @PathVariable Long newOwnerId) {
+    projectService.transferOwnership(loggedId, projectId, newOwnerId);
+  }
+
   @DeleteMapping("/{projectId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,

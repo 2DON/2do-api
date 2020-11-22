@@ -35,7 +35,7 @@ public class AccountService {
    */
   public void assertExists(@NonNull Long accountId,
                            @NonNull HttpStatus status) {
-    if (!accountJPA.existsById(accountId)) {
+    if (!accountJPA.existsByIdAndVerificationSentAtAndDeleteRequest(accountId, null, null)) {
       throw new ResponseStatusException(status);
     }
   }

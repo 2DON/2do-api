@@ -1,1 +1,1 @@
-./gradlew.bat bootRun --args="--spring.profiles.active=dev,local"
+./gradlew bootRun --args="--spring.profiles.active=dev,local"

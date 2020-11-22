@@ -1,5 +1,6 @@
 package io.github._2don.api.project;
 
+import io.github._2don.api.account.Account;
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.projectmember.ProjectMember;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
@@ -8,13 +9,19 @@ import io.github._2don.api.projectmember.ProjectMemberService;
 import io.github._2don.api.utils.Status;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static io.github._2don.api.projectmember.ProjectMemberPermission.MAN_PROJECT;
+import static io.github._2don.api.projectmember.ProjectMemberPermission.OWNER;
+
 @Service
 public class ProjectService {
+
+  private final long NON_PREMIUM_OWN_PROJECTS_LIMIT;
 
   @Autowired
   private ProjectJPA projectJPA;
@@ -24,6 +31,21 @@ public class ProjectService {
   private ProjectMemberService projectMemberService;
   @Autowired
   private AccountJPA accountJPA;
+
+  public ProjectService(@Value("${non-premium-limits.own-projects}") long nonPremiumOwnProjectsLimit) {
+    this.NON_PREMIUM_OWN_PROJECTS_LIMIT = nonPremiumOwnProjectsLimit;
+  }
+
+  public void assertProjectLimit(@NonNull Long accountId) {
+    assertProjectLimit(accountJPA.findById(accountId).orElseThrow(Status.NOT_FOUND));
+  }
+
+  public void assertProjectLimit(@NonNull Account account) {
+    if (!account.getPremium()
+      && projectMemberJPA.countByAccountIdAndPermission(account.getId(), OWNER) >= NON_PREMIUM_OWN_PROJECTS_LIMIT) {
+      throw Status.UPGRADE_REQUIRED.get();
+    }
+  }
 
   public List<ProjectDTO> listByAccountId(@NonNull Long accountId,
                                           boolean archived) {
@@ -49,7 +71,7 @@ public class ProjectService {
       throw Status.BAD_REQUEST.get();
     }
 
-    projectMemberService.assertProjectLimit(accountId);
+    assertProjectLimit(accountId);
 
     var project = new Project()
       .setDescription(description)
@@ -88,7 +110,7 @@ public class ProjectService {
                            Integer ordinal,
                            String options) {
     var member = projectMemberService
-      .findIfHavePermission(accountId, projectId, ProjectMemberPermission.MAN_PROJECT);
+      .findIfIsMemberAndHavePermission(accountId, projectId, ProjectMemberPermission.MAN_PROJECT);
 
     var project = member.getProject();
 
@@ -122,13 +144,37 @@ public class ProjectService {
     return new ProjectDTO(project, member.getPermission());
   }
 
+  public void transferOwnership(@NonNull Long ownerId,
+                                @NonNull Long projectId,
+                                @NonNull Long newOwnerId) {
+    if (ownerId.equals(newOwnerId)) {
+      throw Status.BAD_REQUEST.get();
+    }
+
+    var owner = projectMemberService.findIfIsMemberAndHavePermission(ownerId, projectId, OWNER);
+    var newOwner = projectMemberService.findIfIsMember(newOwnerId, projectId);
+
+    assertProjectLimit(newOwner.getAccount()); // new owner is premium or have not reached the project limit
+
+    owner
+      .setPermission(MAN_PROJECT)
+      .setUpdatedBy(owner.getAccount());
+
+    newOwner
+      .setPermission(OWNER)
+      .setUpdatedBy(owner.getAccount());
+
+    projectMemberJPA.save(owner);
+    projectMemberJPA.save(newOwner);
+  }
+
   public ProjectDTO toggleArchiving(@NonNull Long accountId,
                                     @NonNull Long projectId) {
     var member = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElseThrow(Status.NOT_FOUND);
 
-    if (member.isNot(ProjectMemberPermission.OWNER)) {
+    if (!member.isOwner()) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -145,13 +191,12 @@ public class ProjectService {
   public void delete(Long accountId,
                      Long projectId) {
     var member = projectMemberService
-      .findIfHavePermission(accountId, projectId, ProjectMemberPermission.OWNER);
+      .findIfIsMemberAndHavePermission(accountId, projectId, ProjectMemberPermission.OWNER);
 
     // TODO delete project + members + tasks + steps
     // TODO set delete cascade on tasks and steps
     // TODO backup project for X time
     projectJPA.delete(member.getProject());
   }
-
 
 }

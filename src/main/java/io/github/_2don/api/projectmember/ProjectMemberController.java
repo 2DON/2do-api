@@ -1,5 +1,6 @@
 package io.github._2don.api.projectmember;
 
+import io.github._2don.api.utils.Convert;
 import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,15 +18,15 @@ public class ProjectMemberController {
   @GetMapping
   public List<ProjectMemberDTO> index(@AuthenticationPrincipal Long loggedId,
                                       @PathVariable Long projectId) {
-    return projectMemberService.list(loggedId, projectId);
+    return projectMemberService.findMembers(loggedId, projectId);
   }
 
   @PostMapping
-  public ProjectMemberDTO store(@AuthenticationPrincipal Long loggedId,
-                                @PathVariable Long projectId,
-                                @RequestPart(value = "accountId") String accountId,
-                                @RequestPart(value = "teamId", required = false) String teamId,
-                                @RequestPart(value = "permission") String permission) {
+  public ProjectMemberDTO add(@AuthenticationPrincipal Long loggedId,
+                              @PathVariable Long projectId,
+                              @RequestPart(value = "accountId") String accountId,
+                              @RequestPart(value = "teamId", required = false) String teamId,
+                              @RequestPart(value = "permission") String permission) {
     /*
      * Note:
      *  On the current version 2.0.4, Long and enum types don't work on @RequestPart,
@@ -38,47 +39,29 @@ public class ProjectMemberController {
      * @date:   21-11-2020 (dd-mm-yyyy) 09:41 (GMT-3)
      */
 
-    ProjectMemberPermission perm;
-    try {
-      perm = ProjectMemberPermission.valueOf(permission);
-    } catch (IllegalArgumentException | NullPointerException ignored) {
-      perm = null;
-    }
-    if (accountId == null || perm == null) {
-      throw Status.BAD_REQUEST.get();
-    }
+    var _accountId = Convert.toLong(accountId).orElseThrow(Status.BAD_REQUEST);
+    var _permission = Convert.toProjectMemberPermission(permission).orElseThrow(Status.BAD_REQUEST);
+    var _teamId = teamId == null ? null : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
 
-    System.out.printf("{accountId: %s, teamId: %s, perm: '%s'}\n", accountId, teamId, perm.toString());
-//    return projectMemberService.add(loggedId, projectId, accountId, teamId, permission);
-    return null;
+    return projectMemberService.addMember(loggedId, projectId, _accountId, _teamId, _permission);
   }
 
-  @PatchMapping
-  public ProjectMemberDTO edit(@AuthenticationPrincipal Long loggedId,
-                               @PathVariable Long projectId,
-                               @RequestPart(name = "accountId") Long accountId,
-                               @RequestPart(name = "teamId", required = false) Long teamId,
-                               @RequestPart(name = "permissions") String permissions) {
+  @PatchMapping("/{accountId}")
+  public ProjectMemberDTO update(@AuthenticationPrincipal Long loggedId,
+                                 @PathVariable Long projectId,
+                                 @PathVariable Long accountId,
+                                 @RequestPart(value = "teamId", required = false) String teamId,
+                                 @RequestPart(value = "permission", required = false) String permission) {
+    var _permission = permission == null ? null : Convert.toProjectMemberPermission(permission).orElseThrow(Status.BAD_REQUEST);
+    var _teamId = teamId == null ? null : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
 
-    var projectMemberPermissions = ProjectMemberPermission.valueOf(permissions);
-
-    if (projectMemberPermissions == null) {
-      throw Status.BAD_REQUEST.get();
-    }
-
-    return projectMemberService.edit(loggedId, projectId, accountId, teamId,
-      projectMemberPermissions);
+    return projectMemberService.update(loggedId, projectId, accountId, _teamId, _permission);
   }
 
-  @GetMapping("/{newOwnerId}")
-  public void transferOwnership(@AuthenticationPrincipal Long loggedId,
-                                @PathVariable Long projectId, @PathVariable Long newOwnerId) {
-    projectMemberService.transferOwnership(loggedId, projectId, newOwnerId);
-  }
-
-  @DeleteMapping
-  public void destroy(@AuthenticationPrincipal Long loggedId, @PathVariable Long projectId,
-                      @RequestPart(name = "accountId") Long accountId) {
-    projectMemberService.delete(loggedId, projectId, accountId);
+  @DeleteMapping("/{accountId}")
+  public void remove(@AuthenticationPrincipal Long loggedId,
+                     @PathVariable Long projectId,
+                     @PathVariable Long accountId) {
+    projectMemberService.leaveOrRemoveMember(loggedId, projectId, accountId);
   }
 }

@@ -36,7 +36,7 @@ public class StepService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -85,7 +85,7 @@ public class StepService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -133,7 +133,7 @@ public class StepService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -155,7 +155,7 @@ public class StepService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.UNAUTHORIZED);
 
-    if (projectMeta.isNot(ProjectMemberPermission.MAN_PROJECT)) {
+    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
       throw Status.UNAUTHORIZED.get();
     }
 
@@ -210,7 +210,7 @@ public class StepService {
       .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
       .orElseThrow(Status.NOT_FOUND);
 
-    if (projectMeta.isNot(ProjectMemberPermission.MAN_TASKS)) {
+    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_TASKS)) {
       throw Status.UNAUTHORIZED.get();
     }
 

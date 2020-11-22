@@ -20,5 +20,13 @@ public enum ProjectMemberPermission {
   /**
    * Allowed to do everything, including deleting and archiving the project
    */
-  OWNER
+  OWNER;
+
+  public boolean lessThan(ProjectMemberPermission permission) {
+    return this.ordinal() < permission.ordinal();
+  }
+
+  public boolean greaterOrEqualTo(ProjectMemberPermission permission) {
+    return this.ordinal() >= permission.ordinal();
+  }
 }

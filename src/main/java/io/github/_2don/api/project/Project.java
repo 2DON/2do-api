@@ -41,7 +41,7 @@ public class Project {
   private Timestamp createdAt;
 
   @ManyToOne
-  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "created_by", referencedColumnName = "id", nullable = false)
   private Account createdBy;
 
   @UpdateTimestamp
@@ -49,7 +49,7 @@ public class Project {
   private Timestamp updatedAt;
 
   @ManyToOne
-  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false, insertable = false, updatable = false)
+  @JoinColumn(name = "updated_by", referencedColumnName = "id", nullable = false)
   private Account updatedBy;
 
   public Project(@NotBlank String description) {
