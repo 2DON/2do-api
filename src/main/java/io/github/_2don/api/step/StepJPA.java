@@ -11,8 +11,10 @@ public interface StepJPA extends JpaRepository<Step, Long> {
 
   List<Step> findAllByTaskId(Long taskId, Sort sort);
 
-  boolean existsByIdAndTaskId(Long taskId, Long projectId);
+  boolean existsByIdAndTaskId(Long stepId, Long taskId);
 
-  Optional<Task> findByIdAndTaskId(Long taskId, Long projectId);
+  Optional<Step> findByIdAndTaskId(Long stepId, Long taskId);
+
+  Optional<Step> findByIdAndTaskIdAndTaskProjectId(Long stepId, Long taskId, Long projectId);
 
 }

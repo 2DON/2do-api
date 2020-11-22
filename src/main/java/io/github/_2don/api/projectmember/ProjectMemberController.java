@@ -39,9 +39,17 @@ public class ProjectMemberController {
      * @date:   21-11-2020 (dd-mm-yyyy) 09:41 (GMT-3)
      */
 
-    var _accountId = Convert.toLong(accountId).orElseThrow(Status.BAD_REQUEST);
-    var _permission = Convert.toProjectMemberPermission(permission).orElseThrow(Status.BAD_REQUEST);
-    var _teamId = teamId == null ? null : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
+    var _accountId
+      = Convert.toLong(accountId)
+      .orElseThrow(Status.BAD_REQUEST);
+
+    var _permission
+      = Convert.toEnum(ProjectMemberPermission.class, permission)
+      .orElseThrow(Status.BAD_REQUEST);
+
+    var _teamId = teamId == null
+      ? null
+      : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
 
     return projectMemberService.addMember(loggedId, projectId, _accountId, _teamId, _permission);
   }
@@ -52,8 +60,13 @@ public class ProjectMemberController {
                                  @PathVariable Long accountId,
                                  @RequestPart(value = "teamId", required = false) String teamId,
                                  @RequestPart(value = "permission", required = false) String permission) {
-    var _permission = permission == null ? null : Convert.toProjectMemberPermission(permission).orElseThrow(Status.BAD_REQUEST);
-    var _teamId = teamId == null ? null : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
+    var _permission = permission == null
+      ? null
+      : Convert.toEnum(ProjectMemberPermission.class, permission).orElseThrow(Status.BAD_REQUEST);
+
+    var _teamId = teamId == null
+      ? null
+      : Convert.toLong(teamId).orElseThrow(Status.BAD_REQUEST);
 
     return projectMemberService.update(loggedId, projectId, accountId, _teamId, _permission);
   }

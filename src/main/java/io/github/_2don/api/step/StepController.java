@@ -1,6 +1,8 @@
 package io.github._2don.api.step;
 
 
+import io.github._2don.api.utils.Convert;
+import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,51 +18,44 @@ public class StepController {
   private StepService stepService;
 
   @GetMapping
-  public List<Step> index(@AuthenticationPrincipal Long accountId,
-                          @PathVariable Long projectId,
-                          @PathVariable Long taskId) {
-    return stepService.getSteps(accountId, projectId, taskId);
+  public List<StepDTO> index(@AuthenticationPrincipal Long accountId,
+                             @PathVariable Long projectId,
+                             @PathVariable Long taskId) {
+    return stepService.findSteps(accountId, projectId, taskId);
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public Step store(@AuthenticationPrincipal Long accountId,
-                    @RequestParam(name = "description", required = true) String description,
-                    @PathVariable Long projectId,
-                    @PathVariable Long taskId) {
-    // return stepService.add(accountId, step, projectId, taskId);
-    return stepService.add(accountId, description, projectId, taskId);
-  }
-
-  @GetMapping("/{stepId}")
-  public Step show(@AuthenticationPrincipal Long accountId,
-                   @PathVariable Long stepId,
-                   @PathVariable Long projectId,
-                   @PathVariable Long taskId) {
-    return stepService.getStep(accountId, stepId, projectId, taskId);
+  public StepDTO store(@AuthenticationPrincipal Long accountId,
+                       @PathVariable Long projectId,
+                       @PathVariable Long taskId,
+                       @RequestPart(name = "description") String description,
+                       @RequestPart(name = "ordinal", required = false) Integer ordinal) {
+    return stepService.create(accountId, projectId, taskId, description, ordinal);
   }
 
   @PatchMapping("/{stepId}")
-  public Step edit(@AuthenticationPrincipal Long accountId,
-                   @PathVariable Long stepId,
-                   @PathVariable Long projectId,
-                   @PathVariable Long taskId,
-                   @RequestParam(name = "ordinal", required = false) Integer ordinal,
-                   @RequestParam(name = "description", required = false) String description,
-                   @RequestParam(name = "observation", required = false) String observation,
-                   @RequestParam(name = "status", required = false) String status) {
-    // return stepService.edit(accountId, stepId, projectId, taskId, step);
-    return stepService.edit(accountId, stepId, projectId, taskId, ordinal, description, observation,
-      status);
+  public StepDTO update(@AuthenticationPrincipal Long accountId,
+                        @PathVariable Long projectId,
+                        @PathVariable Long taskId,
+                        @PathVariable Long stepId,
+                        @RequestPart(name = "description", required = false) String description,
+                        @RequestPart(name = "status", required = false) String status,
+                        @RequestPart(name = "ordinal", required = false) Integer ordinal,
+                        @RequestPart(name = "observation", required = false) String observation) {
+    var _status = status == null
+      ? null
+      : Convert.toEnum(StepStatus.class, status).orElseThrow(Status.BAD_REQUEST);
+
+    return stepService.update(accountId, projectId, taskId, stepId, description, _status, ordinal, observation);
   }
 
   @DeleteMapping("/{stepId}")
   @ResponseStatus(HttpStatus.OK)
   public void destroy(@AuthenticationPrincipal Long accountId,
-                      @PathVariable Long stepId,
                       @PathVariable Long projectId,
-                      @PathVariable Long taskId) {
-
-    stepService.delete(accountId, stepId, projectId, taskId);
+                      @PathVariable Long taskId,
+                      @PathVariable Long stepId) {
+    stepService.delete(accountId, projectId, taskId, stepId);
   }
 }

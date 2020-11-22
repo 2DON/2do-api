@@ -8,7 +8,9 @@ import io.github._2don.api.projectmember.ProjectMemberService;
 import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -25,6 +27,12 @@ public class TaskService {
   private AccountJPA accountJPA;
   @Autowired
   private ProjectMemberJPA projectMemberJPA;
+
+  public void assertExists(Long projectId, Long taskId) {
+    if (!taskJPA.existsByIdAndProjectId(taskId, projectId)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+  }
 
   public Task add(Long accountId, Task task, Long projectId) {
     // account is member of project and has permission
@@ -219,5 +227,4 @@ public class TaskService {
   public boolean exist(Long projectId, Long taskId) {
     return taskJPA.existsByIdAndProjectId(taskId, projectId);
   }
-
 }

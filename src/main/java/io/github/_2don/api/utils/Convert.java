@@ -1,7 +1,5 @@
 package io.github._2don.api.utils;
 
-import io.github._2don.api.projectmember.ProjectMemberPermission;
-
 import java.util.Optional;
 
 public class Convert {
@@ -14,11 +12,12 @@ public class Convert {
     }
   }
 
-  public static Optional<ProjectMemberPermission> toProjectMemberPermission(String permission) {
+  public static <T extends Enum<T>> Optional<T> toEnum(Class<T> type, String raw) {
     try {
-      return Optional.of(ProjectMemberPermission.valueOf(permission));
+      return Optional.of(T.valueOf(type, raw));
     } catch (IllegalArgumentException | NullPointerException ignored) {
       return Optional.empty();
     }
   }
+
 }
