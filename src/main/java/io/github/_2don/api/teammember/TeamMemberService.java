@@ -83,10 +83,6 @@ public class TeamMemberService {
     return teamMembersJPA.findAllByTeamId(teamId);
   }
 
-  public List<TeamMember> getTeamMembers(Long accountId) {
-    return teamMembersJPA.findAllByAccountId(accountId);
-  }
-
   public TeamMember getTeamMember(Long accountId, Long teamId) {
     return teamMembersJPA
       .findByAccountIdAndTeamId(accountId, teamId)

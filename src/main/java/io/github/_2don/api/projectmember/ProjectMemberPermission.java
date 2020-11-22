@@ -18,7 +18,7 @@ public enum ProjectMemberPermission {
    */
   MAN_PROJECT,
   /**
-   * Allowed to do everything, including deleting and archiving the project
+   * Allowed to do everything, including deleting and archive the project
    */
   OWNER;
 

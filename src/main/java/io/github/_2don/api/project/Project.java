@@ -34,7 +34,7 @@ public class Project {
   private String observation;
 
   @Column(nullable = false)
-  private Boolean achieved = false;
+  private boolean archived = false;
 
   @Column(columnDefinition = "TEXT")
   private String options;

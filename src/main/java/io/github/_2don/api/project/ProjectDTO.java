@@ -31,11 +31,11 @@ public class ProjectDTO {
                     ProjectMemberPermission permission) {
     this(
       project.getId(),
-      project.getIcon(), 
+      project.getIcon(),
       project.getOrdinal(),
       project.getDescription(),
       project.getObservation(),
-      project.getAchieved(),
+      project.isArchived(),
       project.getOptions(),
       permission,
       project.getCreatedAt(),

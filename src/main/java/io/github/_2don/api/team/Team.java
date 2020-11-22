@@ -21,7 +21,7 @@ public class Team {
   private Long id;
 
   @Column(columnDefinition = "TEXT")
-  private String avatarUrl;
+  private String icon;
 
   @NotNull
   @Size(min = 1, max = 45)

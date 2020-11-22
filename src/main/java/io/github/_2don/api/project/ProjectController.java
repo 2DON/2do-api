@@ -17,8 +17,8 @@ public class ProjectController {
 
   @GetMapping
   public List<ProjectDTO> index(@AuthenticationPrincipal Long accountId,
-                                @RequestParam(value = "achieved", required = false, defaultValue = "false") Boolean achieved) {
-    return projectService.findProjects(accountId, achieved);
+                                @RequestParam(value = "archived", required = false, defaultValue = "false") Boolean archived) {
+    return projectService.findProjects(accountId, archived);
   }
 
   @PostMapping
@@ -53,10 +53,10 @@ public class ProjectController {
     return projectService.updateIcon(accountId, projectId, icon);
   }
 
-  @GetMapping("/{projectId}/toggle-archiving")
-  public ProjectDTO toggleArchiving(@AuthenticationPrincipal Long accountId,
-                                    @PathVariable Long projectId) {
-    return projectService.toggleArchiving(accountId, projectId);
+  @GetMapping("/{projectId}/toggle-archived")
+  public ProjectDTO toggleArchived(@AuthenticationPrincipal Long accountId,
+                                   @PathVariable Long projectId) {
+    return projectService.toggleArchived(accountId, projectId);
   }
 
   @GetMapping("/{projectId}/transfer-to/{newOwnerId}")

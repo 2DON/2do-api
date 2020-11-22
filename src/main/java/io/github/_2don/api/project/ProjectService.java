@@ -51,9 +51,9 @@ public class ProjectService {
   }
 
   public List<ProjectDTO> findProjects(@NonNull Long accountId,
-                                       boolean achieved) {
+                                       boolean archived) {
     return projectMemberJPA
-      .findAllByAccountIdAndProjectArchieved(accountId, achieved)
+      .findAllByAccountIdAndProjectArchived(accountId, archived)
       .stream()
       .map(ProjectDTO::new)
       .collect(Collectors.toList());
@@ -79,6 +79,8 @@ public class ProjectService {
     var project = new Project()
       .setDescription(description)
       .setOrdinal(ordinal == null ? Integer.MAX_VALUE : ordinal);
+
+    System.out.println(project);
 
     if (observation != null) {
       if (observation.isBlank()) {
@@ -197,8 +199,8 @@ public class ProjectService {
     projectMemberJPA.save(newOwner);
   }
 
-  public ProjectDTO toggleArchiving(@NonNull Long accountId,
-                                    @NonNull Long projectId) {
+  public ProjectDTO toggleArchived(@NonNull Long accountId,
+                                   @NonNull Long projectId) {
     var member = projectMemberJPA
       .findByAccountIdAndProjectId(accountId, projectId)
       .orElseThrow(Status.NOT_FOUND);
@@ -210,7 +212,7 @@ public class ProjectService {
     var project = member.getProject();
 
     project
-      .setAchieved(!project.getAchieved())
+      .setArchived(!project.isArchived())
       .setUpdatedBy(member.getAccount());
 
     project = projectJPA.save(project);
