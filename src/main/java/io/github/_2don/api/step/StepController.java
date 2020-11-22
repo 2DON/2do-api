@@ -16,7 +16,8 @@ public class StepController {
   private StepService stepService;
 
   @GetMapping
-  public List<Step> index(@AuthenticationPrincipal Long accountId, @PathVariable Long projectId,
+  public List<Step> index(@AuthenticationPrincipal Long accountId,
+                          @PathVariable Long projectId,
                           @PathVariable Long taskId) {
     return stepService.getSteps(accountId, projectId, taskId);
   }
@@ -25,20 +26,25 @@ public class StepController {
   @ResponseStatus(HttpStatus.CREATED)
   public Step store(@AuthenticationPrincipal Long accountId,
                     @RequestParam(name = "description", required = true) String description,
-                    @PathVariable Long projectId, @PathVariable Long taskId) {
+                    @PathVariable Long projectId,
+                    @PathVariable Long taskId) {
     // return stepService.add(accountId, step, projectId, taskId);
     return stepService.add(accountId, description, projectId, taskId);
   }
 
   @GetMapping("/{stepId}")
-  public Step show(@AuthenticationPrincipal Long accountId, @PathVariable Long stepId,
-                   @PathVariable Long projectId, @PathVariable Long taskId) {
+  public Step show(@AuthenticationPrincipal Long accountId,
+                   @PathVariable Long stepId,
+                   @PathVariable Long projectId,
+                   @PathVariable Long taskId) {
     return stepService.getStep(accountId, stepId, projectId, taskId);
   }
 
   @PatchMapping("/{stepId}")
-  public Step edit(@AuthenticationPrincipal Long accountId, @PathVariable Long stepId,
-                   @PathVariable Long projectId, @PathVariable Long taskId,
+  public Step edit(@AuthenticationPrincipal Long accountId,
+                   @PathVariable Long stepId,
+                   @PathVariable Long projectId,
+                   @PathVariable Long taskId,
                    @RequestParam(name = "ordinal", required = false) Integer ordinal,
                    @RequestParam(name = "description", required = false) String description,
                    @RequestParam(name = "observation", required = false) String observation,
@@ -50,8 +56,10 @@ public class StepController {
 
   @DeleteMapping("/{stepId}")
   @ResponseStatus(HttpStatus.OK)
-  public void destroy(@AuthenticationPrincipal Long accountId, @PathVariable Long stepId,
-                      @PathVariable Long projectId, @PathVariable Long taskId) {
+  public void destroy(@AuthenticationPrincipal Long accountId,
+                      @PathVariable Long stepId,
+                      @PathVariable Long projectId,
+                      @PathVariable Long taskId) {
 
     stepService.delete(accountId, stepId, projectId, taskId);
   }
