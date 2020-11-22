@@ -3,16 +3,21 @@ package io.github._2don.api.task;
 import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
-import io.github._2don.api.projectmember.ProjectMemberPermission;
 import io.github._2don.api.projectmember.ProjectMemberService;
 import io.github._2don.api.utils.Status;
+import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static io.github._2don.api.projectmember.ProjectMemberPermission.MAN_MEMBERS;
+import static io.github._2don.api.projectmember.ProjectMemberPermission.MAN_TASKS;
 
 @Service
 public class TaskService {
@@ -28,203 +33,98 @@ public class TaskService {
   @Autowired
   private ProjectMemberJPA projectMemberJPA;
 
-  public void assertExists(Long projectId, Long taskId) {
+  public void assertExists(@NonNull Long projectId,
+                           @NonNull Long taskId) {
     if (!taskJPA.existsByIdAndProjectId(taskId, projectId)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
   }
 
-  public Task add(Long accountId, Task task, Long projectId) {
-    // account is member of project and has permission
-    var projectMeta = projectMemberJPA
-      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
-      .orElseThrow(Status.UNAUTHORIZED);
+  public List<TaskDTO> findTasks(@NotNull Long accountId,
+                                 @NotNull Long projectId) {
+    projectMemberService.assertIsMember(accountId, projectId, HttpStatus.UNAUTHORIZED);
 
-    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    task
-      .setCreatedBy(projectMeta.getAccount())
-      .setUpdatedBy(projectMeta.getAccount())
-      .setProject(projectMeta.getProject());
-
-    return taskJPA.save(task);
+    return taskJPA
+      .findAllByProjectId(projectId, Sort.by(Sort.Direction.ASC, "ordinal"))
+      .stream()
+      .map(TaskDTO::new)
+      .collect(Collectors.toList());
   }
 
-  public Task add(Long accountId, String description, Long projectId, Long assignedToId) {
-    // account is member of project and has permission
-    var projectMeta = projectMemberJPA
-      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
-      .orElseThrow(Status.UNAUTHORIZED);
+  public TaskDTO create(@NonNull Long accountId,
+                        @NonNull Long projectId,
+                        @NonNull String description,
+                        Integer ordinal) {
+    var member = projectMemberService.findIfIsMemberAndHavePermission(accountId, projectId, MAN_MEMBERS);
 
-    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
-      throw Status.UNAUTHORIZED.get();
+    if (description.length() < 1 || description.length() >= 80) {
+      throw Status.BAD_REQUEST.get();
     }
 
-    // FIXME assigned to is supposed to be OPTIONAL NOT REQUIRED
-    // var assignedTo = accountService.getAccount(assignedToId);
+    var task = new Task()
+      .setDescription(description)
+      .setOrdinal(ordinal == null ? Integer.MAX_VALUE : ordinal)
+      .setCreatedBy(member.getAccount())
+      .setUpdatedBy(member.getAccount())
+      .setProject(member.getProject())
+      .setAssignedTo(null);
 
-    Task task = new Task();
-    task.setCreatedBy(projectMeta.getAccount());
-    task.setUpdatedBy(projectMeta.getAccount());
-    task.setProject(projectMeta.getProject());
-    task.setDescription(description);
-    task.setAssignedTo(null);
-
-    return taskJPA.save(task);
+    return new TaskDTO(taskJPA.save(task));
   }
 
-  public Task update(Long accountId, Long projectId, Long taskId, Task task) {
-    // account is member of project and has permission
-    var projectMeta = projectMemberJPA
-      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
-      .orElseThrow(Status.UNAUTHORIZED);
+  public TaskDTO update(@NonNull Long accountId,
+                        @NonNull Long projectId,
+                        @NonNull Long taskId,
+                        String description,
+                        Integer ordinal,
+                        TaskStatus status,
+                        String options,
+                        Long assignedTo) {
+    var member = projectMemberService.findIfIsMemberAndHavePermission(accountId, projectId, MAN_MEMBERS);
 
-    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    var taskEdit = taskJPA.findByIdAndProjectId(taskId, projectId)
-      .orElseThrow(Status.NOT_FOUND);
-
-    if (task.getOrdinal() != null) {
-      taskEdit.setOrdinal(task.getOrdinal());
-    }
-
-    if (task.getDescription() != null) {
-      if (task.getDescription().length() == 0 || task.getDescription().length() >= 80) {
-        throw Status.BAD_REQUEST.get();
-      }
-      taskEdit.setDescription(task.getDescription());
-    }
-
-    if (task.getStatus() != null) {
-      taskEdit.setStatus(task.getStatus());
-    }
-
-    if (task.getOptions() != null) {
-      if (task.getOptions().length() == 0) {
-        taskEdit.setOptions(null);
-      }
-      taskEdit.setOptions(task.getOptions());
-    }
-
-    if (task.getAssignedTo() != null) {
-      taskEdit.setAssignedTo(task.getAssignedTo());
-    }
-
-    taskEdit.setUpdatedBy(projectMeta.getAccount());
-
-    return taskJPA.save(taskEdit);
-  }
-
-  public Task update(Long accountId, Long projectId, Long taskId, Integer ordinal,
-                     String description, String status, String options, Long assignedToId) {
-
-    // account is member of project and has permission
-    var projectMeta = projectMemberJPA
-      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
-      .orElseThrow(Status.UNAUTHORIZED);
-
-    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    var taskEdit = taskJPA.findByIdAndProjectId(taskId, projectId)
-      .orElseThrow(Status.NOT_FOUND);
-
-    if (ordinal != null) {
-      taskEdit.setOrdinal(ordinal);
-    }
+    var task = taskJPA.findByIdAndProjectId(taskId, projectId).orElseThrow(Status.NOT_FOUND);
 
     if (description != null) {
-      if (description.length() == 0 || description.length() >= 80) {
+      if (description.length() < 1 || description.length() >= 80) {
         throw Status.BAD_REQUEST.get();
       }
-      taskEdit.setDescription(description);
+      task.setDescription(task.getDescription());
+    }
+
+    if (ordinal != null) {
+      task.setOrdinal(ordinal);
     }
 
     if (status != null) {
-      // FIXME what?
-      TaskStatus taskStatus = TaskStatus.valueOf(status);
-
-      if (taskStatus != null) {
-        taskEdit.setStatus(taskStatus);
-      }
+      task.setStatus(status);
     }
 
     if (options != null) {
-      if (options.length() == 0) {
-        taskEdit.setOptions(null);
+      if (options.isBlank()) {
+        task.setOptions(null);
       }
-      taskEdit.setOptions(options);
+      task.setOptions(options);
     }
 
-    if (assignedToId != null) {
-      taskEdit.setAssignedTo(accountJPA.getOne(assignedToId));
+    if (assignedTo != null) {
+      projectMemberService.assertIsMember(assignedTo, projectId, HttpStatus.UNAUTHORIZED);
+
+      task.setAssignedTo(accountJPA.getOne(assignedTo));
     }
 
-    taskEdit.setUpdatedBy(projectMeta.getAccount());
+    task.setUpdatedBy(member.getAccount());
 
-    return taskJPA.save(taskEdit);
+    return new TaskDTO(taskJPA.save(task));
   }
 
-  public void delete(Long accountId, Long taskId, Long projectId) {
-    // account is member of project and has permission
-    var projectMeta = projectMemberJPA
-      .findByAccountIdAndProjectIdAndProjectArchived(accountId, projectId, false)
-      .orElseThrow(Status.UNAUTHORIZED);
+  public void delete(@NonNull Long accountId,
+                     @NonNull Long projectId,
+                     @NonNull Long taskId) {
+    projectMemberService.findIfIsMemberAndHavePermission(accountId, projectId, MAN_TASKS);
 
-    if (projectMeta.getPermission().lessThan(ProjectMemberPermission.MAN_PROJECT)) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    var task = taskJPA.findById(taskId).orElse(null);
-    if (task == null || !task.getProject().getId().equals(projectId)) {
-      throw Status.NOT_FOUND.get();
-    }
+    var task = taskJPA.findByIdAndProjectId(taskId, projectId).orElseThrow(Status.NOT_FOUND);
 
     taskJPA.delete(task);
   }
 
-  public Task getTask(Long accountId, Long projectId, Long taskId) {
-
-    // account is member of project
-    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    // task exists and belongs to project
-    var task = taskJPA.findById(taskId).orElse(null);
-    if (task == null || !task.getProject().getId().equals(projectId)) {
-      throw Status.NOT_FOUND.get();
-    }
-
-    return taskJPA.getOne(taskId);
-  }
-
-  public List<Task> getTasks(Long accountId, Long projectId) {
-
-    // account is member of project
-    if (!projectMemberJPA.existsByAccountIdAndProjectId(accountId, projectId)) {
-      throw Status.UNAUTHORIZED.get();
-    }
-
-    return taskJPA.findAllByProjectId(projectId, Sort.by(Sort.Direction.ASC, "ordinal"));
-  }
-
-  public Task getTask(Long projectId, Long taskId) {
-    // task exists and belongs to project
-    var task = taskJPA.findById(taskId).orElse(null);
-    if (task == null || !task.getProject().getId().equals(projectId)) {
-      throw Status.NOT_FOUND.get();
-    }
-
-    return taskJPA.getOne(taskId);
-  }
-
-  public boolean exist(Long projectId, Long taskId) {
-    return taskJPA.existsByIdAndProjectId(taskId, projectId);
-  }
 }

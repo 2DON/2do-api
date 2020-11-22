@@ -1,8 +1,6 @@
 package io.github._2don.api.team;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.github._2don.api.account.Account;
-import io.github._2don.api.task.TaskDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;

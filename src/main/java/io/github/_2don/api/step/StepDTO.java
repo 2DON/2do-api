@@ -1,7 +1,6 @@
 package io.github._2don.api.step;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.github._2don.api.account.Account;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NonNull;
