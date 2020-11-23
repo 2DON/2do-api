@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 
 @Controller
 @RequestMapping("/auth/sign-up/verify")
@@ -31,6 +32,12 @@ public class VerificationController {
   @ResponseBody
   public void reSend(@RequestParam String email) throws IOException, ResponseStatusException {
     verificationService.reSend(email);
+  }
+
+  @GetMapping("/time")
+  @ResponseBody
+  public Timestamp time(@RequestParam String email) {
+    return verificationService.timeOf(email);
   }
 
 }

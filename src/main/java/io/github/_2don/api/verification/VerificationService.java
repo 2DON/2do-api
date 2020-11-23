@@ -125,4 +125,15 @@ public class VerificationService {
     accountJPA.save(account);
   }
 
+
+  public Timestamp timeOf(@NonNull String email) {
+    var account = accountJPA.findByEmail(email)
+      .orElseThrow(Status.NOT_FOUND);
+
+    if (account.isVerified()) {
+      throw Status.UNAUTHORIZED.get();
+    }
+
+    return account.getVerificationSentAt();
+  }
 }

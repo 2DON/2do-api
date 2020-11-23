@@ -43,7 +43,8 @@ public class AccountService {
   public void create(@NonNull String email,
                      @NonNull String password,
                      String name,
-                     String options) throws IOException {
+                     String options,
+                     MultipartFile avatar) throws IOException {
     if (!Patterns.EMAIL.matches(email) || email.length() > 45
       || password.length() < 8 || password.getBytes().length > 72) {
       throw Status.BAD_REQUEST.get();
@@ -65,6 +66,20 @@ public class AccountService {
       account.setName(name);
     } else {
       throw Status.BAD_REQUEST.get();
+    }
+
+    if (avatar == null || avatar.isEmpty()) {
+      account.setAvatarUrl(null);
+    } else {
+      if (!ImageEncoder.supports(avatar.getContentType())) {
+        throw Status.BAD_REQUEST.get();
+      }
+
+      try {
+        account.setAvatarUrl(ImageEncoder.encodeToString(avatar.getBytes()));
+      } catch (IOException e) {
+        throw Status.BAD_REQUEST.get();
+      }
     }
 
     account = accountJPA.save(account);
