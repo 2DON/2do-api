@@ -4,6 +4,7 @@ import io.github._2don.api.account.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
@@ -19,8 +20,9 @@ public class AuthController {
   public void signUp(@RequestPart(name = "email") String email,
                      @RequestPart(name = "password") String password,
                      @RequestPart(name = "name", required = false) String name,
-                     @RequestPart(name = "options", required = false) String options) throws IOException {
-    accountService.create(email, password, name, options);
+                     @RequestPart(name = "options", required = false) String options,
+                     @RequestPart(name = "avatar") MultipartFile avatar) throws IOException {
+    accountService.create(email, password, name, options, avatar);
   }
 
   @PostMapping("/sign-up/fix-email")
