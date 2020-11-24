@@ -88,7 +88,7 @@ public class TaskService {
       if (description.length() < 1 || description.length() >= 80) {
         throw Status.BAD_REQUEST.get();
       }
-      task.setDescription(task.getDescription());
+      task.setDescription(description);
     }
 
     if (ordinal != null) {
@@ -114,7 +114,8 @@ public class TaskService {
 
     task.setUpdatedBy(member.getAccount());
 
-    return new TaskDTO(taskJPA.save(task));
+    task = taskJPA.save(task);
+    return new TaskDTO(task);
   }
 
   public void delete(@NonNull Long accountId,
