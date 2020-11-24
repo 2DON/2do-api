@@ -4,9 +4,17 @@ import java.util.Optional;
 
 public class Convert {
 
-  public static Optional<Long> toLong(String string) {
+  public static Optional<Long> toLong(String raw) {
     try {
-      return Optional.of(Long.parseLong(string, 10));
+      return Optional.of(Long.parseLong(raw, 10));
+    } catch (NumberFormatException ignored) {
+      return Optional.empty();
+    }
+  }
+
+  public static Optional<Integer> toInteger(String raw) {
+    try {
+      return Optional.of(Integer.parseInt(raw, 10));
     } catch (NumberFormatException ignored) {
       return Optional.empty();
     }
@@ -20,9 +28,9 @@ public class Convert {
     }
   }
 
-  public static Optional<Boolean> toBoolean(String string) {
+  public static Optional<Boolean> toBoolean(String raw) {
     try {
-      return Optional.of(Boolean.parseBoolean(string));
+      return Optional.of(Boolean.parseBoolean(raw));
     } catch (NumberFormatException ignored) {
       return Optional.empty();
     }

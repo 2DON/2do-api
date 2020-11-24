@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'io.github._2don.api'
-version = '1.0.2'
+version = '1.0.3'
 mainClassName = 'io.github._2don.api.Application'
 
 configurations {
@@ -34,7 +34,6 @@ dependencies {
   implementation 'org.springframework.boot:spring-boot-starter-security'
   implementation 'org.springframework.boot:spring-boot-starter-validation'
   implementation 'org.springframework.boot:spring-boot-starter-web'
-  developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
   compile 'com.sendgrid:sendgrid-java:4.0.1'
   runtimeOnly 'org.postgresql:postgresql'

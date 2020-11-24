@@ -19,7 +19,6 @@ public class TeamMemberController {
   @GetMapping
   public List<TeamMemberDTO> index(@AuthenticationPrincipal Long accountId,
                                    @PathVariable Long teamId) {
-    System.out.println("AQ CHEGOU");
     return teamMemberService.findMembers(accountId, teamId);
   }
 

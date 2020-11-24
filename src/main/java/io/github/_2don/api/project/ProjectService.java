@@ -80,8 +80,6 @@ public class ProjectService {
       .setDescription(description)
       .setOrdinal(ordinal == null ? Integer.MAX_VALUE : ordinal);
 
-    System.out.println(project);
-
     if (observation != null) {
       if (observation.isBlank()) {
         project.setObservation(null);

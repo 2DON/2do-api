@@ -32,10 +32,6 @@ public class TeamMemberService {
   }
 
   public List<TeamMemberDTO> findMembers(Long accountId, Long teamId) {
-    System.out.println(teamId);
-    System.out.println(teamMemberJPA
-      .findAllByTeamId(teamId));
-
     assertIsMember(accountId, teamId);
 
     return teamMemberJPA

@@ -1,5 +1,7 @@
 package io.github._2don.api.project;
 
+import io.github._2don.api.utils.Convert;
+import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,9 +43,13 @@ public class ProjectController {
                            @PathVariable Long projectId,
                            @RequestPart(name = "description", required = false) String description,
                            @RequestPart(name = "observation", required = false) String observation,
-                           @RequestPart(name = "ordinal", required = false) Integer ordinal,
+                           @RequestPart(name = "ordinal", required = false) String ordinal,
                            @RequestPart(name = "options", required = false) String options) {
-    return projectService.update(accountId, projectId, description, observation, ordinal, options);
+    var _ordinal = ordinal == null
+      ? null
+      : Convert.toInteger(ordinal).orElseThrow(Status.BAD_REQUEST);
+
+    return projectService.update(accountId, projectId, description, observation, _ordinal, options);
   }
 
   @PutMapping("/{projectId}/icon")
