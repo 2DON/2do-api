@@ -30,8 +30,12 @@ public class StepController {
                        @PathVariable Long projectId,
                        @PathVariable Long taskId,
                        @RequestPart(name = "description") String description,
-                       @RequestPart(name = "ordinal", required = false) Integer ordinal) {
-    return stepService.create(accountId, projectId, taskId, description, ordinal);
+                       @RequestPart(name = "ordinal", required = false) String ordinal) {
+    var _ordinal = ordinal == null
+      ? null
+      : Convert.toInteger(ordinal).orElseThrow(Status.BAD_REQUEST);
+
+    return stepService.create(accountId, projectId, taskId, description, _ordinal);
   }
 
   @PatchMapping("/{stepId}")
