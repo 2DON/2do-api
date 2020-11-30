@@ -2,6 +2,7 @@ package io.github._2don.api.projectmember;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,6 @@ public interface ProjectMemberJPA extends JpaRepository<ProjectMember, ProjectMe
 
   Optional<ProjectMember> findByAccountIdAndProjectIdAndProjectArchived(Long accountId, Long projectId, boolean archived);
 
+  @Transactional
+  long deleteByProjectId(Long taskId);
 }

@@ -6,14 +6,19 @@ import io.github._2don.api.projectmember.ProjectMember;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
 import io.github._2don.api.projectmember.ProjectMemberPermission;
 import io.github._2don.api.projectmember.ProjectMemberService;
+import io.github._2don.api.step.StepJPA;
+import io.github._2don.api.task.Task;
+import io.github._2don.api.task.TaskJPA;
 import io.github._2don.api.utils.ImageEncoder;
 import io.github._2don.api.utils.Status;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,6 +39,10 @@ public class ProjectService {
   private ProjectMemberService projectMemberService;
   @Autowired
   private AccountJPA accountJPA;
+  @Autowired
+  private TaskJPA taskJPA;
+  @Autowired
+  private StepJPA stepJPA;
 
   public ProjectService(@Value("${non-premium-limits.own-projects}") long nonPremiumOwnProjectsLimit) {
     this.NON_PREMIUM_OWN_PROJECTS_LIMIT = nonPremiumOwnProjectsLimit;
@@ -222,9 +231,21 @@ public class ProjectService {
     var member = projectMemberService
       .findIfIsMemberAndHavePermission(accountId, projectId, ProjectMemberPermission.OWNER);
 
-    // TODO delete project + members + tasks + steps
-    // TODO set delete cascade on tasks and steps
-    // TODO backup project for X time
+    // query all taskIds for this project
+    var taskIds = taskJPA.findAllByProjectId(projectId, Sort.unsorted()).stream().mapToLong(Task::getId);
+
+    // delete all steps
+    taskIds.forEach(taskId -> {
+      stepJPA.deleteByTaskId(taskId);
+    });
+
+    // delete all tasks
+    taskJPA.deleteByProjectId(projectId);
+
+    // remove all members
+    projectMemberJPA.deleteByProjectId(projectId);
+
+    // delete the project
     projectJPA.delete(member.getProject());
   }
 
