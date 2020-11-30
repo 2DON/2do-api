@@ -22,7 +22,7 @@ public class ProjectMemberDTO {
 
   public ProjectMemberDTO(@NonNull ProjectMember projectMember) {
     this(
-      projectMember.getAccount().getId(),
+      projectMember.getAccountId(),
       projectMember.getTeam() == null ? null : projectMember.getTeam().getId(),
       projectMember.getPermission(),
       projectMember.getCreatedAt(),
