@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'io.github._2don.api'
-version = '1.0.3'
+version = '1.0.4'
 mainClassName = 'io.github._2don.api.Application'
 
 configurations {
