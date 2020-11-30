@@ -4,6 +4,7 @@ import io.github._2don.api.account.AccountJPA;
 import io.github._2don.api.account.AccountService;
 import io.github._2don.api.projectmember.ProjectMemberJPA;
 import io.github._2don.api.projectmember.ProjectMemberService;
+import io.github._2don.api.step.StepJPA;
 import io.github._2don.api.utils.Status;
 import lombok.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,8 @@ public class TaskService {
   private AccountJPA accountJPA;
   @Autowired
   private ProjectMemberJPA projectMemberJPA;
+  @Autowired
+  private StepJPA stepJPA;
 
   public void assertExists(@NonNull Long projectId,
                            @NonNull Long taskId) {
@@ -125,6 +128,7 @@ public class TaskService {
 
     var task = taskJPA.findByIdAndProjectId(taskId, projectId).orElseThrow(Status.NOT_FOUND);
 
+    stepJPA.deleteByTaskId(task.getId());
     taskJPA.delete(task);
   }
 
