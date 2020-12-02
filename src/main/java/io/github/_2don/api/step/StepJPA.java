@@ -17,6 +17,8 @@ public interface StepJPA extends JpaRepository<Step, Long> {
 
   Optional<Step> findByIdAndTaskIdAndTaskProjectId(Long stepId, Long taskId, Long projectId);
 
+  List<Step> findAllByTaskProjectId(Long projectId);
+
   @Transactional
   long deleteByTaskId(Long taskId);
 

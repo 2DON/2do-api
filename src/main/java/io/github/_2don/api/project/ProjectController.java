@@ -1,5 +1,7 @@
 package io.github._2don.api.project;
 
+import io.github._2don.api.stats.ProjectStats;
+import io.github._2don.api.stats.ProjectStatsService;
 import io.github._2don.api.utils.Convert;
 import io.github._2don.api.utils.Status;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,8 @@ public class ProjectController {
 
   @Autowired
   private ProjectService projectService;
+  @Autowired
+  private ProjectStatsService projectStatsService;
 
   @GetMapping
   public List<ProjectDTO> index(@AuthenticationPrincipal Long accountId,
@@ -30,6 +34,12 @@ public class ProjectController {
                           @RequestPart(name = "observation", required = false) String observation,
                           @RequestPart(name = "ordinal", required = false) Integer ordinal) {
     return projectService.create(accountId, description, observation, ordinal);
+  }
+
+  @GetMapping("/{projectId}/stats")
+  public ProjectStats stats(@AuthenticationPrincipal Long accountId,
+                            @PathVariable Long projectId) {
+    return projectStatsService.stats(accountId, projectId);
   }
 
   @GetMapping("/{projectId}")

@@ -9,4 +9,8 @@ public class TimeUtils {
     return Instant.now().toEpochMilli() + TimeUnit.MINUTES.toMillis(minutes);
   }
 
+  public static long nowLessWeeks(Long weeks) {
+    return Instant.now().toEpochMilli() - TimeUnit.DAYS.toMillis(weeks * 7 - 1);
+  }
+
 }
